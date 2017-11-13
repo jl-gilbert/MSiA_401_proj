@@ -1,0 +1,70 @@
+---
+title: "Create fiscal years"
+author: "Anisha Dubhashi"
+date: "11/13/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+###load data
+```{r}
+df <- read_csv("catalog sales data.csv")
+df$datead6 <- as.Date(df$datead6,format = "%m/%d/%Y")
+df$datelp6 <- as.Date(df$datelp6,format = "%m/%d/%Y")
+```
+
+### Create year_ordyr
+```{r}
+df$year_ordyr <- format(1980, format = "%Y")
+
+for (i in 1:nrow(df)) {
+  if (df$ordtyr[i] > 0) {
+    df$year_ordyr[i] <- format(2012, format = "%Y")
+  } else if (df$ordlyr[i] > 0) {
+    df$year_ordyr[i] <- format(2011, format = "%Y")
+  } else if (df$ord2ago[i] > 0) {
+    df$year_ordyr[i] <- format(2010, format = "%Y")
+  } else if (df$ord3ago[i] > 0) {
+    df$year_ordyr[i] <- format(2009, format = "%Y")
+  }  
+}
+
+barplot(table(df$year_ordyr))
+```
+
+### Create year_slsyr
+```{r}
+df$year_slsyr <- format(1980, format = "%Y")
+
+for (i in 1:nrow(df)) {
+  if (df$slstyr[i] > 0) {
+    df$year_slsyr[i] <- format(2012, format = "%Y")
+  } else if (df$slslyr[i] > 0) {
+    df$year_slsyr[i] <- format(2011, format = "%Y")
+  } else if (df$sls2ago[i] > 0) {
+    df$year_slsyr[i] <- format(2010, format = "%Y")
+  } else if (df$sls3ago[i] > 0) {
+    df$year_slsyr[i] <- format(2009, format = "%Y")
+  }  
+}
+
+barplot(table(df$year_slsyr))
+```
+
+###Compare ord and sls - sls year never more recent than order year
+```{r}
+table(df$year_ordyr, df$year_slsyr, dnn = c("ord", "sls"))
+```
+
+
+
+
+
+

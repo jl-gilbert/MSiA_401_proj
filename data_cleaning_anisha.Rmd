@@ -83,9 +83,73 @@ sum(ordhist_desc > 0)
 sum(ordhist_desc == 0)
 ```
 
+###order history vs. orders each year
+```{r}
+ordhist_desc2 <- (df$ordtyr + df$ordlyr + df$ord2ago + df$ord3ago) - df$ordhist
+table(ordhist_desc2, useNA = "ifany", dnn = c("ord - ordhist"))
+
+#falord + sprord < ordhist
+sum(ordhist_desc2 < 0)
+
+#falord + sprord > ordhist
+sum(ordhist_desc2 > 0)
+
+#falord + sprord = ordhist
+sum(ordhist_desc2 == 0)
+```
+
+```{r}
+
+
+#create year_lp6yr
+df$year_lp6yr <- format(df$datelp6, "%Y")
+barplot(table(df$year_lp6yr))
+
+#create year_lpuryr
+df$year_lpuryr <- format(1980, format = "%Y")
+
+for (i in 1:nrow(df)) {
+  if (is.na(df$lpuryear[i])) {
+    df$year_lpuryr[i] <- format(1980, format = "%Y")
+  } else if (df$lpuryear[i] <= 2) {
+    df$year_lpuryr[i] <- format(df$lpuryear[i] + 2010, format = "%Y")
+  } else if (df$lpuryear[i] > 2) {
+    df$year_lpuryr[i] <- format(df$lpuryear[i] + 2000, format = "%Y")
+  }  
+}
+barplot(table(df$year_lpuryr))
 
 
 
+
+#create year_ordyr
+df$year_ordyr <- format(1980, format = "%Y")
+
+for (i in 1:nrow(df)) {
+  if (df$ordtyr[i] > 0) {
+    df$year_ordyr[i] <- format(2012, format = "%Y")
+  } else if (df$ordlyr[i] > 0) {
+    df$year_ordyr[i] <- format(2011, format = "%Y")
+  } else if (df$ord2ago[i] > 0) {
+    df$year_ordyr[i] <- format(2010, format = "%Y")
+  } else if (df$ord3ago[i] > 0) {
+    df$year_ordyr[i] <- format(2009, format = "%Y")
+  }  
+}
+barplot(table(df$year_ordyr))
+```
+
+```{r}
+table(df$year_lp6yr, df$year_lpuryr)
+
+
+df[, c('year_lp6yr', 'year_lpuryr', 'year_ordyr') ]
+
+df %>% 
+  group_by(year_lp6yr, year_lpuryr, year_ordyr) %>% 
+  summarise(n = n())
+
+```
 
 
 
