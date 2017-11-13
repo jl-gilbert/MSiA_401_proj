@@ -1,0 +1,97 @@
+---
+title: "Data Cleaning"
+author: "Anisha Dubhashi"
+date: "11/11/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+###load all data from csv in working directory
+```{r}
+df <- read_csv("catalog sales data.csv")
+```
+
+###convert dates to date type
+```{r}
+df$datead6 <- as.Date(df$datead6,format = "%m/%d/%Y")
+df$datelp6 <- as.Date(df$datelp6,format = "%m/%d/%Y")
+```
+
+### compare datelp6 to lpuryear - think lpuryear isn't necessary
+```{r}
+df2 <- df[df$targdol > 0, ]
+
+table(df$lpuryear, format(df$datelp6, "%Y"), useNA = "ifany")
+```
+
+###~200 orders have no sales value for each year 
+```{r}
+#2012
+table(df$slstyr > 0, df$ordtyr > 0, dnn = c("sales", "orders"))
+
+#2011
+table(df$slslyr > 0, df$ordlyr > 0, dnn = c("sales", "orders"))
+
+#2010
+table(df$sls2ago > 0, df$ord2ago > 0, dnn = c("sales", "orders"))
+
+#2009
+table(df$sls3ago > 0, df$ord3ago > 0, dnn = c("sales", "orders"))
+
+#history
+tab <- table(df$slshist > 0, df$ordhist > 0, dnn = c("sales", "orders"))
+tab
+
+#percent of discrepancy 
+sum(tab[1,2])/sum(tab)
+```
+
+###lots of discrepancies between orders and date of last purchase
+```{r}
+#2012
+table(format(df$datelp6, "%Y"), df$ordtyr > 0, useNA = "ifany", dnn = c("year last order", "2012 order"))
+
+#2011
+table(format(df$datelp6, "%Y"), df$ordlyr > 0, useNA = "ifany", dnn = c("year last order", "2011 order"))
+
+#2010
+table(format(df$datelp6, "%Y"), df$ord2ago > 0, useNA = "ifany", dnn = c("year last order", "2010 order"))
+
+#2009
+table(format(df$datelp6, "%Y"), df$ord3ago > 0, useNA = "ifany", dnn = c("year last order", "2009 order"))
+```
+
+###fall & spring order history
+```{r}
+ordhist_desc <- (df$falord + df$sprord) - df$ordhist
+table(ordhist_desc, useNA = "ifany", dnn = c("falord + sprord - ordhist"))
+
+#falord + sprord < ordhist
+sum(ordhist_desc < 0)
+
+#falord + sprord > ordhist
+sum(ordhist_desc > 0)
+
+#falord + sprord = ordhist
+sum(ordhist_desc == 0)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
