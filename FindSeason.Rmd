@@ -1,0 +1,40 @@
+---
+title: "FindSeason"
+author: "Joe Gilbert"
+date: "11/13/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(lubridate)
+```
+
+
+```{r}
+findSeason <- function(date) {
+  if (month(date) < 7) {
+    season <- "Spring"
+  }
+  else {
+    season <- "Fall"
+  }
+  return(season)
+}
+  
+findSeasons <- function(dataframe) {
+  seasons <- sapply(dataframe$datelp6,findSeason)
+  return(seasons)
+}
+```
+
+
+##Example of how to use on data (might take a while with our 100k rows)
+```{r}
+testdata <- catalogdata[1:500,]
+testdata$recentseason <- findSeasons(testdata)
+```
+
