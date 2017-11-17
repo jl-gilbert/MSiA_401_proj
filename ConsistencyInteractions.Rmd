@@ -1,0 +1,51 @@
+---
+title: "ConsistencyInteractions"
+author: "Joe Gilbert"
+date: "11/15/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+catalogtest <- catalogdata[sample(nrow(catalogdata),1000),]
+```
+
+8 different levels of consistency, how they are defined and if we need this many is up for debate but I think this makes sense. They are all mutually exclusive.
+```{r}
+catalogtest$consistent1 <- as.numeric(catalogtest$ordtyr > 0 
+                                      & catalogtest$ordlyr > 0
+                                      & catalogtest$ord2ago > 0
+                                      & catalogtest$ord3ago > 0)
+catalogtest$consistent2 <- as.numeric(catalogtest$ordtyr == 0 
+                                      & catalogtest$ordlyr > 0
+                                      & catalogtest$ord2ago > 0
+                                      & catalogtest$ord3ago > 0)
+catalogtest$consistent3 <- as.numeric(catalogtest$ordtyr > 0 
+                                      & catalogtest$ordlyr > 0
+                                      & catalogtest$ord2ago > 0
+                                      & catalogtest$ord3ago == 0)
+catalogtest$consistent4 <- as.numeric(catalogtest$ordtyr > 0 
+                                      & catalogtest$ordlyr > 0
+                                      & catalogtest$ord2ago == 0
+                                      & catalogtest$ord3ago == 0)
+catalogtest$consistent5 <- as.numeric(catalogtest$ordtyr == 0 
+                                      & catalogtest$ordlyr > 0
+                                      & catalogtest$ord2ago > 0
+                                      & catalogtest$ord3ago == 0)
+catalogtest$consistent6 <- as.numeric(catalogtest$ordtyr == 0 
+                                      & catalogtest$ordlyr == 0
+                                      & catalogtest$ord2ago > 0
+                                      & catalogtest$ord3ago > 0)
+catalogtest$consistent7 <- as.numeric(catalogtest$ordtyr > 0 
+                                      & catalogtest$ordlyr == 0
+                                      & catalogtest$ord2ago > 0
+                                      & catalogtest$ord3ago == 0)
+catalogtest$consistent8 <- as.numeric(catalogtest$ordtyr == 0 
+                                      & catalogtest$ordlyr > 0
+                                      & catalogtest$ord2ago == 0
+                                      & catalogtest$ord3ago > 0)
+```
+
