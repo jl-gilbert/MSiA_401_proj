@@ -98,6 +98,6 @@ table(df$max_year, df$ord3ago > 0, useNA = "ifany", dnn = c("year last order", "
 ###check discrepancies
 ```{r}
 #df[(df$max_year == 2012 & df$ordtyr == 0), ]
-df[(df$ordtyr == 0 & df$ordlyr == 0 & df$ord2ago == 0 & df$ord3ago == 0 & year(df$datelp6) >= 2009), ]
+head(df[(df$ordtyr == 0 & df$ordlyr == 0 & df$ord2ago == 0 & df$ord3ago == 0 & year(df$datelp6) >= 2009), ], 10)
 ```
 
