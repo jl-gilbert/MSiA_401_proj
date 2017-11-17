@@ -80,3 +80,24 @@ table(df$max_year, df$year_ordyr, dnn = c("max", "ordyr"))
 table(df$max_year, df$year_lp6yr, dnn = c("max", "lp6"))
 ```
 
+###not many discrepancies between orders and date of last purchase
+```{r}
+#2012
+table(df$max_year, df$ordtyr > 0, useNA = "ifany", dnn = c("year last order", "2012 order"))
+
+#2011
+table(df$max_year, df$ordlyr > 0, useNA = "ifany", dnn = c("year last order", "2011 order"))
+
+#2010
+table(df$max_year, df$ord2ago > 0, useNA = "ifany", dnn = c("year last order", "2010 order"))
+
+#2009
+table(df$max_year, df$ord3ago > 0, useNA = "ifany", dnn = c("year last order", "2009 order"))
+```
+
+###check discrepancies
+```{r}
+#df[(df$max_year == 2012 & df$ordtyr == 0), ]
+df[(df$ordtyr == 0 & df$ordlyr == 0 & df$ord2ago == 0 & df$ord3ago == 0 & year(df$datelp6) >= 2009), ]
+```
+
