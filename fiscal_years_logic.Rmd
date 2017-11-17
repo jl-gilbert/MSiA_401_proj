@@ -1,0 +1,82 @@
+---
+title: "Create fiscal years"
+author: "Anisha Dubhashi"
+date: "11/13/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+```
+
+###load data
+```{r}
+df <- read_csv("catalog sales data.csv")
+df$datead6 <- as.Date(df$datead6,format = "%m/%d/%Y")
+df$datelp6 <- as.Date(df$datelp6,format = "%m/%d/%Y")
+```
+
+### Create year_ordyr
+```{r}
+df$year_ordyr <- 1980
+#needs to be in order of least to most recent for overwriting
+df$year_ordyr[df$ord3ago > 0] <- 2009
+df$year_ordyr[df$ord2ago > 0] <- 2010
+df$year_ordyr[df$ordlyr > 0] <- 2011
+df$year_ordyr[df$ordtyr > 0] <- 2012
+```
+
+###Create recentseason function
+```{r}
+findSeason <- function(date, cutoff) {
+  if (month(date) < cutoff) {
+    season <- "Spring"
+  }
+  else {
+    season <- "Fall"
+  }
+  return(season)
+}
+  
+findSeasons <- function(dataframe, cutoff) {
+  seasons <- sapply(dataframe$datelp6, findSeason, cutoff = cutoff)
+  return(seasons)
+}
+```
+
+### Create year_lp6yr
+```{r}
+df$recentseason <- findSeasons(df, cutoff = 7)
+
+df$year_lp6yr <- year(df$datelp6)
+
+# Jan-June of Year x -> fiscalyear.a = x
+df$year_lp6yr[df$recentseason == "Spring"] <- year(df$datelp6[df$recentseason == "Spring"])
+
+# July+ of Year x -> fiscalyear.b = x+1
+df$year_lp6yr[df$recentseason == "Fall"] <- year(df$datelp6[df$recentseason == "Fall"]) + 1
+
+#clean the 3 2013s
+df$year_lp6yr[df$year_lp6yr == 2013] <- df$year_lp6yr[df$year_lp6yr == 2013] - 1
+```
+
+```{r}
+table(df$year_lp6yr, df$year_ordyr, dnn = c("lp6 after", "ordyr"))
+#table(year(df$datelp6), df$year_ordyr, dnn = c("lp6 before", "ordyr"))
+```
+
+```{r}
+head(df[(df$year_ordyr != df$year_lp6yr) & df$year_ordyr > 1980 & df$targdol, ], 20)
+```
+
+```{r}
+df$max_year <- pmax(df$year_lp6yr, df$year_ordyr)
+table(df$max_year, df$year_ordyr, dnn = c("max", "ordyr"))
+table(df$max_year, df$year_lp6yr, dnn = c("max", "lp6"))
+```
+
