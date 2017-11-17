@@ -30,22 +30,54 @@ catalogtest$consistent3 <- as.numeric(catalogtest$ordtyr > 0
 catalogtest$consistent4 <- as.numeric(catalogtest$ordtyr > 0 
                                       & catalogtest$ordlyr > 0
                                       & catalogtest$ord2ago == 0
-                                      & catalogtest$ord3ago == 0)
-catalogtest$consistent5 <- as.numeric(catalogtest$ordtyr == 0 
-                                      & catalogtest$ordlyr > 0
-                                      & catalogtest$ord2ago > 0
-                                      & catalogtest$ord3ago == 0)
-catalogtest$consistent6 <- as.numeric(catalogtest$ordtyr == 0 
+                                      & catalogtest$ord3ago > 0)
+catalogtest$consistent5 <- as.numeric(catalogtest$ordtyr > 0 
                                       & catalogtest$ordlyr == 0
                                       & catalogtest$ord2ago > 0
                                       & catalogtest$ord3ago > 0)
-catalogtest$consistent7 <- as.numeric(catalogtest$ordtyr > 0 
-                                      & catalogtest$ordlyr == 0
+catalogtest$consistent6 <- as.numeric(catalogtest$ordtyr > 0 
+                                      & catalogtest$ordlyr > 0
+                                      & catalogtest$ord2ago == 0
+                                      & catalogtest$ord3ago == 0)
+catalogtest$consistent7 <- as.numeric(catalogtest$ordtyr == 0 
+                                      & catalogtest$ordlyr > 0
                                       & catalogtest$ord2ago > 0
                                       & catalogtest$ord3ago == 0)
 catalogtest$consistent8 <- as.numeric(catalogtest$ordtyr == 0 
+                                      & catalogtest$ordlyr == 0
+                                      & catalogtest$ord2ago > 0
+                                      & catalogtest$ord3ago > 0)
+catalogtest$consistent9 <- as.numeric(catalogtest$ordtyr > 0 
+                                      & catalogtest$ordlyr == 0
+                                      & catalogtest$ord2ago > 0
+                                      & catalogtest$ord3ago == 0)
+catalogtest$consistent10 <- as.numeric(catalogtest$ordtyr == 0 
                                       & catalogtest$ordlyr > 0
                                       & catalogtest$ord2ago == 0
                                       & catalogtest$ord3ago > 0)
+catalogtest$consistent11 <- as.numeric(catalogtest$ordtyr > 0 
+                                      & catalogtest$ordlyr == 0
+                                      & catalogtest$ord2ago == 0
+                                      & catalogtest$ord3ago > 0)
+
+```
+
+###get temporary subset of just relevant variables
+```{r}
+consistencies <- catalogtest[c("consistent1","consistent2","consistent3","consistent4","consistent5","consistent6","consistent7","consistent8","consistent9","consistent10","consistent11")]
+consistencies
+```
+
+###convert into single category
+```{r}
+catalogtest$consistencycategory <- factor((as.matrix(consistencies) %*% (1:ncol(consistencies))) + 1, 
+         labels = c("Ref","1", "2","3","4","5","6","7","8","9","10","11"))
+```
+
+
+###drop dummy variables now that we have single categorical variable
+```{r}
+drops <- c("consistent1","consistent2","consistent3","consistent4","consistent5","consistent6","consistent7","consistent8","consistent9","consistent10","consistent11")
+catalogtest <- catalogtest[,!(names(catalogtest) %in% drops)]
 ```
 
