@@ -99,5 +99,9 @@ table(df$max_year, df$ord3ago > 0, useNA = "ifany", dnn = c("year last order", "
 ```{r}
 #df[(df$max_year == 2012 & df$ordtyr == 0), ]
 head(df[(df$ordtyr == 0 & df$ordlyr == 0 & df$ord2ago == 0 & df$ord3ago == 0 & year(df$datelp6) >= 2009), ], 10)
+
+#make sure that ordyr = 0 mostly occur when years before 2008
+tab <- df[((df$ordtyr == 0 & df$ordlyr == 0 & df$ord2ago == 0 & df$ord3ago == 0) & (df$ordhist > 0 | df$falord + df$sprord > 0)), ]
+table(year(tab$datelp6))
 ```
 
