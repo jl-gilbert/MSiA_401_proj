@@ -1,0 +1,180 @@
+---
+title: "Final data cleaning"
+author: "Anisha Dubhashi"
+date: "11/19/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+```
+
+###load data
+```{r}
+raw_data <- read_csv("catalog sales data.csv")
+raw_data$datead6 <- as.Date(raw_data$datead6,format = "%m/%d/%Y")
+raw_data$datelp6 <- as.Date(raw_data$datelp6,format = "%m/%d/%Y")
+
+df <- raw_data
+```
+
+### Create year_ordyr
+```{r}
+df$year_ordyr <- 1980
+
+#needs to be in order of least to most recent for overwriting
+df$year_ordyr[df$ord3ago > 0] <- 2009
+df$year_ordyr[df$ord2ago > 0] <- 2010
+df$year_ordyr[df$ordlyr > 0] <- 2011
+df$year_ordyr[df$ordtyr > 0] <- 2012
+```
+
+###Create recentseason function
+```{r}
+findSeason <- function(date, cutoff) {
+  if (month(date) < cutoff) {
+    season <- "Spring"
+  }
+  else {
+    season <- "Fall"
+  }
+  return(season)
+}
+  
+findSeasons <- function(dataframe, cutoff) {
+  seasons <- sapply(dataframe$datelp6, findSeason, cutoff = cutoff)
+  return(seasons)
+}
+```
+
+### Create year_lp6yr
+```{r}
+df$recentseason <- findSeasons(df, cutoff = 7)
+
+df$year_lp6yr <- year(df$datelp6)
+
+# Jan-June of Year x -> fiscalyear.a = x
+df$year_lp6yr[df$recentseason == "Spring"] <- year(df$datelp6[df$recentseason == "Spring"])
+
+# July+ of Year x -> fiscalyear.b = x+1
+df$year_lp6yr[df$recentseason == "Fall"] <- year(df$datelp6[df$recentseason == "Fall"]) + 1
+
+#clean the 3 2013s
+df$year_lp6yr[df$year_lp6yr == 2013] <- df$year_lp6yr[df$year_lp6yr == 2013] - 1
+```
+
+###Create max year - for 2009+ data
+```{r}
+df$max_year <- pmax(df$year_lp6yr, df$year_ordyr)
+
+if (df$year_lp6yr == df$year_ordyr) {
+  
+} else if (df$year_lp6yr > df$year_ordyr) {
+  
+}
+table(df$max_year, df$year_ordyr, dnn = c("max", "ordyr"))
+table(df$max_year, df$year_lp6yr, dnn = c("max", "lp6"))
+```
+
+###convert lpuryear to full year
+```{r}
+df$lpuryear[df$lpuryear == 3] = 2003
+df$lpuryear[df$lpuryear == 4] = 2004
+df$lpuryear[df$lpuryear == 5] = 2005
+df$lpuryear[df$lpuryear == 6] = 2006
+df$lpuryear[df$lpuryear == 7] = 2007
+df$lpuryear[df$lpuryear == 8] = 2008
+df$lpuryear[df$lpuryear == 9] = 2009
+df$lpuryear[df$lpuryear == 0] = 2010
+df$lpuryear[df$lpuryear == 1] = 2011
+df$lpuryear[df$lpuryear == 2] = 2012
+```
+
+###Create year - for 2009- data
+```{r}
+# recode the rest
+df$year = c(rep(NA, nrows(df)))
+loc6 <- which(as.numeric(format(df$datelp6,"%Y")) == df$lpuryear)
+df$year[loc6] <- df$lpuryear[loc6]
+
+
+loc7 <- which(as.numeric(format(df$datelp6,"%Y")) > df$lpuryear)
+df$year[loc7] <- as.numeric(format(df$datelp6[loc7],"%Y"))
+
+loc8 <- which(as.numeric(format(df$datelp6,"%Y")) < df$lpuryear)
+df$year[loc8] <- as.numeric(format(df$datelp6[loc8],"%Y"))
+
+year.na <- which(is.na(df$lpuryear))
+df$year[year.na] <- as.numeric(format(df$datelp6[year.na],"%Y"))
+
+```
+
+
+```{r}
+df$recency_year <- c(rep(NA, nrow(df)))
+df$recency_year <- df$max_year[df$max_year >= 2009]
+df$recency_year <- df$year[df$max_year < 2009]
+
+table(df$max_year, df$year)
+```
+
+
+###Clean ordhist = falord + sprord
+```{r}
+ord_adjust <- function(df) {
+  for (i in 1:nrow(df)){
+    
+    if (df$ordhist[i] < (df$falord[i] + df$sprord[i])){
+      df$ordhist[i]<-(df$falord[i] + df$sprord[i])
+    }
+    else if (df$ordhist[i] > (df$falord[i] + df$sprord[i])){
+      if(df$recentseason[i] == "Fall"){
+        df$falord[i]<- (df$ordhist[i] - df$sprord[i])
+      }
+      else if (df$recentseason[i] == "Spring"){
+        df$sprord[i]<- (df$ordhist[i] - df$falord[i])}
+    }
+  }
+  return(df)
+}
+
+df<-ord_adjust(df)
+```
+
+###Impute ordyr counts for consistency
+```{r}
+ord_impute_ordyear <- function(df_in){
+  for (i in 1:nrow(df_in)){
+     if(df_in$ordtyr[i]==0
+        &df_in$ordlyr[i]==0
+        &df_in$ord2ago[i]==0
+        &df_in$ord3ago[i]==0
+        &df_in$ordhist[i]!=0)
+    {
+      if (df_in$year_lp6yr[i]==2012){
+        df_in$ordtyr[i]<-1
+      }
+      else if (df_in$year_lp6yr[i]==2011){
+        df_in$ordlyr[i]<-1
+      }
+      else if (df_in$year_lp6yr[i]==2010){
+        df_in$ord2ago[i]<-1
+      }
+      else if (df_in$year_lp6yr[i]==2009){
+        df_in$ord3ago[i]<-1
+      }
+     }
+    
+  }
+  return(df_in)
+}
+
+df <- ord_impute_ordyear(df)
+```
+
+
