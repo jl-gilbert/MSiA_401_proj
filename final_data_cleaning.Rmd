@@ -71,14 +71,6 @@ df$year_lp6yr[df$year_lp6yr == 2013] <- df$year_lp6yr[df$year_lp6yr == 2013] - 1
 ###Create max year - for 2009+ data
 ```{r}
 df$max_year <- pmax(df$year_lp6yr, df$year_ordyr)
-
-if (df$year_lp6yr == df$year_ordyr) {
-  
-} else if (df$year_lp6yr > df$year_ordyr) {
-  
-}
-table(df$max_year, df$year_ordyr, dnn = c("max", "ordyr"))
-table(df$max_year, df$year_lp6yr, dnn = c("max", "lp6"))
 ```
 
 ###convert lpuryear to full year
@@ -102,7 +94,6 @@ df$year = c(rep(NA, nrows(df)))
 loc6 <- which(as.numeric(format(df$datelp6,"%Y")) == df$lpuryear)
 df$year[loc6] <- df$lpuryear[loc6]
 
-
 loc7 <- which(as.numeric(format(df$datelp6,"%Y")) > df$lpuryear)
 df$year[loc7] <- as.numeric(format(df$datelp6[loc7],"%Y"))
 
@@ -117,10 +108,10 @@ df$year[year.na] <- as.numeric(format(df$datelp6[year.na],"%Y"))
 
 ```{r}
 df$recency_year <- c(rep(NA, nrow(df)))
-df$recency_year <- df$max_year[df$max_year >= 2009]
-df$recency_year <- df$year[df$max_year < 2009]
+df$recency_year[df$max_year >= 2009] <- df$max_year[df$max_year >= 2009]
+df$recency_year[df$max_year < 2009] <- df$year[df$max_year < 2009]
 
-table(df$max_year, df$year)
+df$years_since_purchase <- 2012 - df$recency_year
 ```
 
 
@@ -156,16 +147,16 @@ ord_impute_ordyear <- function(df_in){
         &df_in$ord3ago[i]==0
         &df_in$ordhist[i]!=0)
     {
-      if (df_in$year_lp6yr[i]==2012){
+      if (df_in$recency_year[i]==2012){
         df_in$ordtyr[i]<-1
       }
-      else if (df_in$year_lp6yr[i]==2011){
+      else if (df_in$recency_year[i]==2011){
         df_in$ordlyr[i]<-1
       }
-      else if (df_in$year_lp6yr[i]==2010){
+      else if (df_in$recency_year[i]==2010){
         df_in$ord2ago[i]<-1
       }
-      else if (df_in$year_lp6yr[i]==2009){
+      else if (df_in$recency_year[i]==2009){
         df_in$ord3ago[i]<-1
       }
      }
@@ -176,5 +167,91 @@ ord_impute_ordyear <- function(df_in){
 
 df <- ord_impute_ordyear(df)
 ```
+
+###delete columns
+```{r}
+names(df)
+drops <- c("max_year","year","year_lp6yr","year_ordyr")
+df <- df[,!(names(df) %in% drops)]
+```
+
+###Interactions
+8 different levels of consistency, how they are defined and if we need this many is up for debate but I think this makes sense. They are all mutually exclusive.
+```{r}
+df$consistent1 <- as.numeric(df$ordtyr > 0 
+                                      & df$ordlyr > 0
+                                      & df$ord2ago > 0
+                                      & df$ord3ago > 0)
+df$consistent2 <- as.numeric(df$ordtyr == 0 
+                                      & df$ordlyr > 0
+                                      & df$ord2ago > 0
+                                      & df$ord3ago > 0)
+df$consistent3 <- as.numeric(df$ordtyr > 0 
+                                      & df$ordlyr > 0
+                                      & df$ord2ago > 0
+                                      & df$ord3ago == 0)
+df$consistent4 <- as.numeric(df$ordtyr > 0 
+                                      & df$ordlyr > 0
+                                      & df$ord2ago == 0
+                                      & df$ord3ago > 0)
+df$consistent5 <- as.numeric(df$ordtyr > 0 
+                                      & df$ordlyr == 0
+                                      & df$ord2ago > 0
+                                      & df$ord3ago > 0)
+df$consistent6 <- as.numeric(df$ordtyr > 0 
+                                      & df$ordlyr > 0
+                                      & df$ord2ago == 0
+                                      & df$ord3ago == 0)
+df$consistent7 <- as.numeric(df$ordtyr == 0 
+                                      & df$ordlyr > 0
+                                      & df$ord2ago > 0
+                                      & df$ord3ago == 0)
+df$consistent8 <- as.numeric(df$ordtyr == 0 
+                                      & df$ordlyr == 0
+                                      & df$ord2ago > 0
+                                      & df$ord3ago > 0)
+df$consistent9 <- as.numeric(df$ordtyr > 0 
+                                      & df$ordlyr == 0
+                                      & df$ord2ago > 0
+                                      & df$ord3ago == 0)
+df$consistent10 <- as.numeric(df$ordtyr == 0 
+                                      & df$ordlyr > 0
+                                      & df$ord2ago == 0
+                                      & df$ord3ago > 0)
+df$consistent11 <- as.numeric(df$ordtyr > 0 
+                                      & df$ordlyr == 0
+                                      & df$ord2ago == 0
+                                      & df$ord3ago > 0)
+
+```
+
+###get temporary subset of just relevant variables
+```{r}
+consistencies <- df[c("consistent1","consistent2","consistent3","consistent4","consistent5","consistent6","consistent7","consistent8","consistent9","consistent10","consistent11")]
+```
+
+###convert into single category
+```{r}
+df$consistencycategory <- factor((as.matrix(consistencies) %*% (1:ncol(consistencies))) + 1, 
+         labels = c("Ref","1", "2","3","4","5","6","7","8","9","10","11"))
+```
+
+
+###drop dummy variables now that we have single categorical variable
+```{r}
+drops <- c("consistent1","consistent2","consistent3","consistent4","consistent5","consistent6","consistent7","consistent8","consistent9","consistent10","consistent11")
+df <- df[,!(names(df) %in% drops)]
+```
+
+```{r}
+write.csv(df, "cleandata.csv")
+```
+
+
+
+
+
+
+
 
 
