@@ -1,0 +1,360 @@
+---
+title: "MSIA401_PROJECT_VINCENT_11_16"
+author: "Ziwen Wang"
+date: "11/16/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+##
+raw_data<-read.csv("catalog sales data.csv",header = T)
+summary(raw_data)
+head(raw_data)
+
+##split train and test dataset
+train<-subset(raw_data, raw_data$train==1)
+test<-subset(raw_data,raw_data$train==0)
+train<-raw_data
+
+#train dataset EDA
+summary(train)
+head(train)
+dim(train)
+```
+```{r}
+#unique length
+colnames(train)
+length(unique(train$datead6)) #3038
+
+#table_unqiue_date_year
+table_unique_length<-matrix(c(length(unique(train$datead6)),length(unique(train$datelp6)),
+                              length(unique(train$lpuryear))),ncol=3, byrow=TRUE)
+colnames(table_unique_length) <- c("datead6","datelp6","lpuryear")
+table_unique_length <- as.table(table_unique_length)
+
+unique(train$lpuryear)
+#2003- 2012
+
+# check how many NAs in each feature
+length(which(is.na((train$lpuryear))))
+num.NA <- sort(colSums(sapply(train, is.na)))
+num.NA
+#only lpuryear has NAs. So we are lucky.
+
+##for NA, the first strategy is to elimiate all NAs
+train_cleaned<-train[!is.na(train$lpuryear),]
+summary(train_cleaned)
+```
+```{r}
+# Let's check the date and year
+#table(train_cleaned$datead6)
+#table(train_cleaned$datelp6)
+#table(train_cleaned$lpuryear)
+
+
+#check the type of date and year
+class(train_cleaned$datead6)
+train_cleaned$datead6<-as.Date(train_cleaned$datead6,"%m/%d/%Y")
+train_cleaned$datelp6<-as.Date(train_cleaned$datelp6,"%m/%d/%Y")
+```
+```{r}
+
+#date plot
+barplot(table(train_cleaned$datead6))
+barplot(table(train_cleaned$datelp6))
+barplot(table(train_cleaned$lpuryear))
+
+barplot(table(train_cleaned[train_cleaned$targdol>0,]$datead6))
+barplot(table(train_cleaned[train_cleaned$targdol>0,]$datelp6))
+barplot(table(train_cleaned[train_cleaned$targdol>0,]$lpuryear))
+
+#change the name of year
+train_cleaned$lpuryear[train_cleaned$lpuryear==3]<-2003
+train_cleaned$lpuryear[train_cleaned$lpuryear==4]<-2004
+train_cleaned$lpuryear[train_cleaned$lpuryear==5]<-2005
+train_cleaned$lpuryear[train_cleaned$lpuryear==6]<-2006
+train_cleaned$lpuryear[train_cleaned$lpuryear==7]<-2007
+train_cleaned$lpuryear[train_cleaned$lpuryear==8]<-2008
+train_cleaned$lpuryear[train_cleaned$lpuryear==9]<-2009
+train_cleaned$lpuryear[train_cleaned$lpuryear==0]<-2010
+train_cleaned$lpuryear[train_cleaned$lpuryear==1]<-2011
+train_cleaned$lpuryear[train_cleaned$lpuryear==2]<-2012
+barplot(table(train_cleaned$lpuryear))
+```
+```{r}
+#relation between date and life to date orders and sales
+
+with(train_cleaned, plot(datelp6, slshist))
+with(train_cleaned, plot(datelp6, ordhist))
+
+#correlations among orders and salarys
+library(corrplot)
+correlation<-cor(train_cleaned[,c("slstyr","slslyr","sls2ago","sls3ago", 
+                                  "slshist","ordtyr","ordlyr","ord2ago","ord3ago","ordhist","falord","sprord","train" )])
+corrplot(correlation, method = "square", tl.cex = 1)
+corrplot(correlation, method = "square", tl.cex = 1,type = "upper")
+
+correlation_2<-cor(train_cleaned[train_cleaned$targdol>0,c("slstyr","slslyr","sls2ago","sls3ago", 
+                                  "slshist","ordtyr","ordlyr","ord2ago","ord3ago","ordhist","falord","sprord","train" )])
+corrplot(correlation_2, method = "square", tl.cex = 1)
+#some variables have strong correlation
+```
+
+
+```{r}
+#library(tabplot)
+#tableplot(train_cleaned,select=c("targdol","datead6","datelp6","slstyr","slslyr","sls2ago#","sls3ago","slshist","ordtyr","ordlyr","ord2ago","ord3ago","ordhist","falord","sprord","#train" ) )
+
+#sanity check
+with(train_cleaned, plot(falord + sprord, ordhist))
+abline(0,1,col = "red")
+#abline(a=0,b=0,col = "red")
+#find out the falord + sprord >80
+abnorml_data<-train_cleaned[(train_cleaned$falord+train_cleaned$sprord)>80,]
+```
+```{r}
+#lpuryear and datelp6, the year is different
+train_cleaned$datelp6<-as.character(train_cleaned$datelp6)
+train_cleaned$datelp6_year<-sapply(strsplit(train_cleaned$datelp6,'-'),'[[',1)
+train_cleaned$datelp6_year<-as.integer(train_cleaned$datelp6_year)
+train_cleaned$lpuryear<-as.integer(train_cleaned$lpuryear)
+
+plot(train_cleaned$lpuryear,train_cleaned$datelp6_year)
+plot(train_cleaned$datelp6_year,train_cleaned$lpuryear)
+abline(a=0,b=1,col = "red")
+
+unique(train_cleaned$datelp6_year)
+###It seems that lots of year which is not matched.
+
+class(train_cleaned$datelp6)
+train_cleaned$datelp6<-as.Date(train_cleaned$datelp6)
+#train_cleaned$datelp6<as.Date("2011-08-02")
+```
+```{r}
+
+##create a fiscal year
+library(tidyverse)
+head(train$datead6)
+
+### Create year_ordyr
+df<-train_cleaned
+df$year_ordyr <- 1980
+
+#needs to be in order of least to most recent for overwriting
+df$year_ordyr[df$ord3ago > 0] <- 2009
+df$year_ordyr[df$ord2ago > 0] <- 2010
+df$year_ordyr[df$ordlyr > 0] <- 2011
+df$year_ordyr[df$ordtyr > 0] <- 2012
+
+
+barplot(table(df$year_ordyr))
+```
+```{r}
+### Create year_slsyr
+df$year_slsyr <- format(1980, format = "%Y")
+
+for (i in 1:nrow(df)) {
+  if (df$slstyr[i] > 0) {
+    df$year_slsyr[i] <- format(2012, format = "%Y")
+  } else if (df$slslyr[i] > 0) {
+    df$year_slsyr[i] <- format(2011, format = "%Y")
+  } else if (df$sls2ago[i] > 0) {
+    df$year_slsyr[i] <- format(2010, format = "%Y")
+  } else if (df$sls3ago[i] > 0) {
+    df$year_slsyr[i] <- format(2009, format = "%Y")
+  }  
+}
+
+barplot(table(df$year_slsyr))
+```
+
+
+```{r}
+###Compare ord and sls - sls year never more recent than order year
+table(df$year_ordyr, df$year_slsyr, dnn = c("ord", "sls"))
+```
+
+```{r}
+
+#find season
+library(lubridate)
+findSeason <- function(date) {
+  if (month(date) < 7) {
+    season <- "Spring"
+  }
+  else {
+    season <- "Fall"
+  }
+  return(season)
+}
+
+findSeasons <- function(dataframe) {
+  seasons <- sapply(dataframe$datelp6,findSeason)
+  return(seasons)
+}
+
+df$recentseason<- findSeasons(df)
+```
+
+
+```{r}
+#df$recentseason <- findSeasons(df, cutoff = 7)
+
+df$year_lp6yr <- year(df$datelp6)
+
+# Jan-June of Year x -> fiscalyear.a = x
+df$year_lp6yr[df$recentseason == "Spring"] <- year(df$datelp6[df$recentseason == "Spring"])
+
+# July+ of Year x -> fiscalyear.b = x+1
+df$year_lp6yr[df$recentseason == "Fall"] <- year(df$datelp6[df$recentseason == "Fall"]) + 1
+
+#clean the 3 2013s
+df$year_lp6yr[df$year_lp6yr == 2013] <- df$year_lp6yr[df$year_lp6yr == 2013] - 1
+```
+
+```{r}
+df$max_year <- pmax(df$year_lp6yr, df$year_ordyr)
+table(df$max_year, df$year_ordyr, dnn = c("max", "ordyr"))
+table(df$max_year, df$year_lp6yr, dnn = c("max", "lp6"))
+```
+
+###not many discrepancies between orders and date of last purchase
+```{r}
+#2012
+table(df$max_year, df$ordtyr > 0, useNA = "ifany", dnn = c("year last order", "2012 order"))
+
+#2011
+table(df$max_year, df$ordlyr > 0, useNA = "ifany", dnn = c("year last order", "2011 order"))
+
+#2010
+table(df$max_year, df$ord2ago > 0, useNA = "ifany", dnn = c("year last order", "2010 order"))
+
+#2009
+table(df$max_year, df$ord3ago > 0, useNA = "ifany", dnn = c("year last order", "2009 order"))
+```
+
+
+###check discrepancies
+```{r}
+#df[(df$max_year == 2012 & df$ordtyr == 0), ]
+head(df[(df$ordtyr == 0 & df$ordlyr == 0 & df$ord2ago == 0 & df$ord3ago == 0 & year(df$datelp6) >= 2009), ], 10)
+nrow(df[(df$ordtyr == 0 & df$ordlyr == 0 & df$ord2ago == 0 & df$ord3ago == 0 & year(df$datelp6) >= 2009), ])
+```
+
+
+```{r}
+#sanity check
+with(df, plot(falord + sprord, ordhist))
+abline(0,1,col = "red")
+
+### if ordhist < falord + sprord, ordhist <- falord + sprord.
+### if ordhist > falord + sprord, if recent season == fall, falord<- ordhist - sprord
+### if ordhist < falord + sprord, if recent season == spring, sprord<- ordhist - falord
+
+count_ordhist<-0
+count_fall<-0
+count_spring<-0
+
+df$df$count_ordhist<-0
+df$count_fall<-0
+df$count_spring<-0
+
+ord_adjust <- function(df) {
+  for (i in 1:nrow(df)){
+    
+    if (df$ordhist[i] < (df$falord[i] + df$sprord[i])){
+      df$ordhist[i]<-(df$falord[i] + df$sprord[i])
+    }
+    else if (df$ordhist[i] > (df$falord[i] + df$sprord[i])){
+      if(df$recentseason[i] == "Fall"){
+        df$falord[i]<- (df$ordhist[i] - df$sprord[i])
+      }
+      else if (df$recentseason[i] == "Spring"){
+        df$sprord[i]<- (df$ordhist[i] - df$falord[i])}
+    }
+  }
+  return(df)
+}
+
+df2<-ord_adjust(df)
+head(df2)
+
+```
+```{r}
+#max(df2$count_fall)
+#max(df2$count_spring)
+#max(df2$count_ordhist)
+```
+
+
+```{r}
+#sanity check
+with(df2, plot(falord + sprord, ordhist))
+abline(0,1,col = "red")
+```
+
+```{r}
+nrow(df2)
+#View(df2)
+```
+
+```{r}
+#if(df2$ordtyr==0&df2$ordlyr==0&df2$ord2ago==0&df$ord3ago==0&df$ordhist!=0){
+#  
+#}
+
+df_in<-df2[(df2$ordtyr == 0 & df2$ordlyr == 0 & df2$ord2ago == 0 & df2$ord3ago == 0 & year(df2$datelp6) >= 2009), ]
+#max(df_in$ordhist)
+##summary(df_in$ordhist)
+#df_in$ordhist
+#sort(df_in$ordhist,decreasing = T)
+#df_in3<-df_in[,c("ordhist","year_lp6yr")]
+#df_in3
+nrow(df_in)
+```
+```{r}
+ord_impute_ordyear <- function(df_in){
+  for (i in 1:nrow(df_in)){
+     if(df_in$ordtyr[i]==0&df_in$ordlyr[i]==0&df_in$ord2ago[i]==0&df_in$ord3ago[i]==0&df_in$ordhist[i]!=0)
+    {
+      if (df_in$year_lp6yr[i]==2012){
+        df_in$ordtyr[i]<-1
+      }
+      else if (df_in$year_lp6yr[i]==2011){
+        df_in$ordlyr[i]<-1
+      }
+      else if (df_in$year_lp6yr[i]==2010){
+        df_in$ord2ago[i]<-1
+      }
+      else if (df_in$year_lp6yr[i]==2009){
+        df_in$ord3ago[i]<-1
+      }
+     }
+    
+  }
+  return(df_in)
+}
+
+df3<-ord_impute_ordyear(df2)
+nrow(df3)
+
+
+```
+```{r}
+df4<-df3[(df3$ordtyr == 0 & df3$ordlyr == 0 & df3$ord2ago == 0 & df3$ord3ago == 0 & year(df3$datelp6) >= 2009), ]
+
+nrow(df4)
+#c(df_in$ordhist,df_in$year_lp6yr)
+#max(df_in$ordhist)
+##summary(df_in$ordhist)
+#df_in$ordhist
+#sort(df_in$ordhist,decreasing = T)
+#df_in3<-df_in[,c("ordhist","year_lp6yr","ordtyr","ordlyr","ord2ago","ord3ago")]
+#df_in3
+```
+
