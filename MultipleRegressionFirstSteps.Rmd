@@ -1,0 +1,55 @@
+---
+title: "MultipleRegression"
+author: "Joe Gilbert"
+date: "11/20/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+salestrain <- train[train$targdol > 0,]
+```
+
+```{r}
+salestrain$consistencycategory <- as.factor(salestrain$consistencycategory)
+```
+
+```{r}
+salestrain$recentseason <- as.factor(salestrain$recentseason)
+```
+
+```{r}
+salestrain$consistencycategory <- relevel(salestrain$consistencycategory,"Ref")
+```
+
+```{r}
+salestrain$recentseason <- relevel(salestrain$recentseason,"Spring")
+```
+
+
+```{r}
+relevantvarnames <- c("targdol","slstyr","slslyr","sls2ago","sls3ago","slshist","ordtyr","ordlyr","ord2ago","ord3ago","ordhist","falord","sprord","recentseason","years_since_purchase","consistencycategory")
+relevantvars <- salestrain[,(names(salestrain) %in% relevantvarnames)]
+```
+
+```{r}
+library(MASS)
+library(car)
+```
+
+
+```{r}
+model <- lm(log(targdol)~.,data=relevantvars)
+step<- stepAIC(model,direction="forward")
+summary(step)
+```
+
+```{r}
+summary(lm(formula = log(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + slshist + 
+    ordtyr + ordlyr + ord2ago + ordhist + falord + recentseason + years_since_purchase + consistencycategory, 
+    data = relevantvars))
+```
+

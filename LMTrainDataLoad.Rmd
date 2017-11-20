@@ -1,0 +1,32 @@
+---
+title: "DataLoad"
+author: "Joe Gilbert"
+date: "11/10/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+###load all data from csv in working directory
+```{r}
+catalogdataclean <- read_csv("cleandata.csv")
+```
+
+###convert dates to date type
+```{r}
+catalogdataclean$datead6 <- as.Date(catalogdataclean$datead6,format = "%m/%d/%Y")
+catalogdataclean$datelp6 <- as.Date(catalogdataclean$datelp6,format = "%m/%d/%Y")
+```
+
+```{r}
+train <- catalogdataclean[catalogdataclean$train==1,]
+```
+
+
+
