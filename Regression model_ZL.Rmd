@@ -1,0 +1,129 @@
+---
+title: "Untitled"
+author: "Zili Li"
+date: "November 20, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+###load all data from csv in working directory
+```{r}
+catalogdataclean <- read.csv("cleandata.csv")
+```
+
+###convert dates to date type
+```{r}
+catalogdataclean$datead6 <- as.Date(catalogdataclean$datead6,format = "%m/%d/%Y")
+catalogdataclean$datelp6 <- as.Date(catalogdataclean$datelp6,format = "%m/%d/%Y")
+```
+
+```{r}
+train <- catalogdataclean[catalogdataclean$train==1,]
+```
+
+```{r}
+library(car)
+```
+```{r}
+salestrain <- train[train$targdol > 0,]
+```
+
+```{r}
+salestrain$consistencycategory <- as.factor(salestrain$consistencycategory)
+```
+
+```{r}
+salestrain$recentseason <- as.factor(salestrain$recentseason)
+```
+
+```{r}
+salestrain$consistencycategory <- relevel(salestrain$consistencycategory,"Ref")
+```
+
+```{r}
+salestrain$recentseason <- relevel(salestrain$recentseason,"Spring")
+```
+
+
+```{r}
+relevantvarnames <- c("targdol","slstyr","slslyr","sls2ago","sls3ago","slshist","ordtyr","ordlyr","ord2ago","ord3ago","ordhist","falord","sprord","recentseason","years_since_purchase","consistencycategory")
+relevantvars <- salestrain[,(names(salestrain) %in% relevantvarnames)]
+```
+
+
+```{r}
+head(relevantvars)
+fit = lm(log(targdol)~slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + ordhist + falord + recentseason + years_since_purchase + consistencycategory, , data = relevantvars)
+summary(fit)
+
+```
+
+```{r}
+plot(fit, which = 2)
+```
+```{r}
+avPlot(fit,"slstyr")
+avPlot(fit,"slslyr")
+avPlot(fit,"sls2ago")
+avPlot(fit,"sls3ago")
+avPlot(fit,"slshist")
+avPlot(fit,"ordtyr")
+avPlot(fit,"ordlyr")
+avPlot(fit,"ord2ago")
+avPlot(fit,"ord3ago")
+avPlot(fit,"ordhist")
+avPlot(fit,"falord")
+avPlot(fit,"recentseasonFall")
+avPlot(fit,"years_since_purchase")
+```
+```{r}
+fit2 = lm(log(targdol)~slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + ordhist + falord + recentseason + years_since_purchase + consistencycategory + I(slstyr*slslyr) + I(slslyr*sls2ago) + I(sls2ago*sls3ago) + I(slstyr*slslyr*sls2ago) + I(slstyr*sls2ago) + I(slstyr*sls3ago) + I(slslyr*sls3ago) + I(slslyr*sls2ago*sls3ago), data = relevantvars)
+summary(fit2)
+```
+# Add more interaction terms
+```{r}
+relevantvars2 <- relevantvars
+relevantvars2$slstyr_slslyr <- relevantvars2$slstyr*relevantvars2$slslyr
+relevantvars2$slslyr_sls2ago <- relevantvars2$slslyr*relevantvars2$sls2ago
+relevantvars2$sls2ago_sls3ago <- relevantvars2$sls2ago*relevantvars2$sls3ago
+relevantvars2$slstyr_slslyr_sls2ago <- relevantvars2$sls2ago*relevantvars2$slstyr*relevantvars2$slslyr
+relevantvars2$slstyr_sls2ago <- relevantvars2$slstyr*relevantvars2$sls2ago
+relevantvars2$slstyr_sls3ago <- relevantvars2$slstyr*relevantvars2$sls3ago
+relevantvars2$slslyr_sls3ago <- relevantvars2$slslyr*relevantvars2$sls3ago
+relevantvars2$slslyr_sls2ago_sls3ago <- relevantvars2$sls2ago*relevantvars2$sls3ago*relevantvars2$slslyr
+
+relevantvars2$slstyr_slshist <- relevantvars2$slstyr*relevantvars2$slshist
+relevantvars2$slslyr_slshist <- relevantvars2$slslyr*relevantvars2$slshist
+relevantvars2$sls2ago_slshist <- relevantvars2$sls2ago*relevantvars2$slshist
+relevantvars2$sls3ago_slshist <- relevantvars2$sls3ago*relevantvars2$slshist
+
+relevantvars2$slstyr_greater_slslyr <- (relevantvars2$slstyr > relevantvars2$slslyr)
+relevantvars2$slslyr_greater_sls2ago <- (relevantvars2$slslyr > relevantvars2$sls2ago)
+relevantvars2$sls2ago_greater_sls3ago <- (relevantvars2$sls2ago > relevantvars2$sls3ago)
+
+```
+
+```{r}
+head(relevantvars2)
+fit3 = lm(log(targdol)~.,data = relevantvars2)
+summary(fit3)
+```
+```{r}
+library(MASS)
+model <- lm(log(targdol)~.,data=relevantvars2)
+step<- stepAIC(model,direction="forward")
+summary(step)
+stepwise <- step(fit3)
+step.coef <- names(coef(stepwise))
+step.var <- relevantvars2[,(names(relevantvars2) %in% c("targdol",step.coef))]
+fit.step <- lm(log(targdol)~., data = step.var)
+summary(fit.step)
+```
+
