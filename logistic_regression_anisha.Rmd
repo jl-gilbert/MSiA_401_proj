@@ -1,0 +1,74 @@
+---
+title: "Logistic Regression"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+###load all data from csv in working directory
+```{r}
+df <- read_csv("cleandata.csv")
+```
+
+```{r}
+head(df)
+df$buy <- 0
+df$buy[df$targdol > 0] <- 1
+table(df$buy)
+
+#9.4% buy rate
+sum(df$buy)/nrow(df)
+```
+
+
+
+```{r}
+install.packages('mlogit')
+library(mlogit)
+df_reshape <- mlogit.data(data = df, choice = "buy", shape = "wide")
+
+df_train <- df_reshape[df_reshape$train == 1, ]
+df_test <- df_reshape[df_reshape$train == 0, ]
+
+df2 <- df[, c('buy', 'years_since_purchase', 'consistencycategory')]
+df3 <- mlogit.data(data = df2, choice = "buy", shape = "wide")
+
+#get names
+z <- NULL 
+for (name in names(df_test)) {
+  z <- paste(z, name, "+")
+}
+z
+
+#X1 + targdol + datead6 + datelp6 + lpuryear + slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + ordhist + falord + sprord + train + recentseason + recency_year + years_since_purchase + consistencycategory + buy + chid + alt
+
+fit <- mlogit(buy ~ years_since_purchase + consistencycategory, data = df3)
+
+
+#fit <- mlogit(buy ~  datelp6 + slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + ordhist + falord + sprord + years_since_purchase + consistencycategory, data = df_train)
+summary(fit)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
