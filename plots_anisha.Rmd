@@ -1,0 +1,62 @@
+---
+title: "Plots"
+author: "Anisha Dubhashi"
+date: "11/11/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(outliers)
+```
+
+###load all data from csv in working directory
+```{r}
+df <- read_csv("cleandata.csv")
+```
+
+```{r}
+#names(df)
+
+par(mfrow = c(2, 2))
+boxplot(df$targdol, outline = TRUE)
+plot(df$datead6, df$targdol)
+plot(df$datelp6, df$targdol)
+plot(df$lpuryear, df$targdol)
+
+par(mfrow = c(2, 3))
+plot(df$slstyr, df$targdol)
+plot(df$slslyr, df$targdol)
+plot(df$sls2ago, df$targdol)
+plot(df$sls3ago, df$targdol)
+plot(df$slshist, df$targdol)
+
+par(mfrow = c(2, 3))
+plot(df$ordtyr, df$targdol)
+plot(df$ordlyr, df$targdol)
+plot(df$ord2ago, df$targdol)
+plot(df$ord3ago, df$targdol)
+plot(df$ordhist, df$targdol)
+
+par(mfrow = c(2, 2))
+plot(df$falord, df$targdol)
+plot(df$sprord, df$targdol)
+plot(df$years_since_purchase, df$targdol)
+```
+
+```{r}
+df[df$targdol == outlier(df$targdol),]
+
+df[df$ordhist >= outlier(df$ordhist),]
+```
+
+
+
+
+
+
+
