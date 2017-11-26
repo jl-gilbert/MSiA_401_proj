@@ -8,12 +8,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=FALSE}
-install.packages("tidyverse")
+#install.packages("tidyverse")
 library(tidyverse)
+library(lubridate)
 ```
-
-
-
 
 ###load all data from csv in working directory
 ```{r}
@@ -43,6 +41,45 @@ sum(df$buy)/nrow(df)
 
 df[df$buy == 1,]
 ```
+
+###frequency tables/logistic transform plot (see pg 131 of book)
+```{r}
+frequency_table <- function(predictor, name) {
+  tab <- as.data.frame.matrix(table(predictor, df$buy))
+  tab$buy_prop <- tab[,2]/rowSums(tab)
+  tab$log_odds <- log(tab$buy_prop/(1 - tab$buy_prop))
+  return (plot(x = as.numeric(rownames(tab)), 
+               y = tab$log_odds,
+               xlab = name,
+               ylab = 'log odds'))
+}
+  
+par(mfrow = c(2, 2))
+frequency_table(year(df$datead6), 'datead6')
+frequency_table(year(df$datelp6), 'datelp6')
+frequency_table(df$lpuryear, 'lpuryear')
+
+par(mfrow = c(2, 3))
+frequency_table(df$slstyr, 'slstyr')
+frequency_table(df$slslyr, 'slslyr')
+frequency_table(df$sls2ago, 'sls2ago')
+frequency_table(df$sls3ago, 'sls3ago')
+frequency_table(df$slshist, 'slshist')
+
+par(mfrow = c(2, 3))
+frequency_table(df$ordtyr, 'ordtyr')
+frequency_table(df$ordlyr, 'ordlyr')
+frequency_table(df$ord2ago, 'ord2ago')
+frequency_table(df$ord3ago, 'ord3ago')
+frequency_table(df$ordhist, 'ordhist')
+
+par(mfrow = c(2, 2))
+frequency_table(df$falord, 'falord')
+frequency_table(df$sprord, 'sprord')
+frequency_table(df$years_since_purchase, 'years_since_purchase')
+```
+
+
 ###split into test and train + other data cleaning
 ```{r}
 df_train <- df[df$train == 1, ]
@@ -75,7 +112,8 @@ table(df_test$buy, round(test_predict, 1), dnn = c('true', 'predicted'))
 test_predict[test_predict < .1] <- 0 
 test_predict[test_predict >= .1] <- 1 
 
-table(df_test$buy, test_predict, dnn = c('true', 'predicted'))
+tab <- table(df_test$buy, test_predict, dnn = c('true', 'predicted'))
+tab
 cat('CCR:', sum(diag(tab))/sum(tab))
 cat('\nTrue targdol of predicted buyers', sum(df_test$targdol[test_predict == 1]))
 ```
@@ -96,7 +134,8 @@ table(df_test$buy, round(test_predict, 1), dnn = c('true', 'predicted'))
 test_predict[test_predict < .1] <- 0 
 test_predict[test_predict >= .1] <- 1 
 
-table(df_test$buy, test_predict, dnn = c('true', 'predicted'))
+tab <- table(df_test$buy, test_predict, dnn = c('true', 'predicted'))
+tab
 cat('CCR:', sum(diag(tab))/sum(tab))
 cat('\nTrue targdol of predicted buyers', sum(df_test$targdol[test_predict == 1]))
 ```
