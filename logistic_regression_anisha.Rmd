@@ -8,8 +8,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=FALSE}
-install.packages("tidyverse")
+#install.packages("tidyverse")
 library(tidyverse)
+library(lubridate)
 ```
 
 ###load all data from csv in working directory
@@ -17,43 +18,154 @@ library(tidyverse)
 df <- read_csv("cleandata.csv")
 ```
 
+###to do: impute values for lpuryr
+```{r}
+table(df$lpuryear, df$recency_year, useNA = "ifany")
+df$lpuryear[is.na(df$lpuryear) == TRUE] <- df$recency_year[is.na(df$lpuryear) == TRUE]
+```
+
+```{r}
+table(df$consistencycategory)
+df$consistencycategory <- relevel(factor(df$consistencycategory), 'Ref')
+```
+
+#create new column to predict called buy
 ```{r}
 head(df)
 df$buy <- 0
 df$buy[df$targdol > 0] <- 1
-table(df$buy)
+table(df$buy, useNA = "ifany")
 
 #9.4% buy rate
 sum(df$buy)/nrow(df)
+
+df[df$buy == 1,]
+```
+
+###frequency tables/logistic transform plot (see pg 131 of book)
+```{r}
+frequency_table <- function(predictor, name) {
+  tab <- as.data.frame.matrix(table(predictor, df$buy))
+  tab$buy_prop <- tab[,2]/rowSums(tab)
+  tab$log_odds <- log(tab$buy_prop/(1 - tab$buy_prop))
+  return (plot(x = as.numeric(rownames(tab)), 
+               y = tab$log_odds,
+               xlab = name,
+               ylab = 'log odds'))
+}
+  
+par(mfrow = c(2, 2))
+frequency_table(year(df$datead6), 'datead6')
+frequency_table(year(df$datelp6), 'datelp6')
+frequency_table(df$lpuryear, 'lpuryear')
+
+par(mfrow = c(2, 3))
+frequency_table(df$slstyr, 'slstyr')
+frequency_table(df$slslyr, 'slslyr')
+frequency_table(df$sls2ago, 'sls2ago')
+frequency_table(df$sls3ago, 'sls3ago')
+frequency_table(df$slshist, 'slshist')
+
+par(mfrow = c(2, 3))
+frequency_table(df$ordtyr, 'ordtyr')
+frequency_table(df$ordlyr, 'ordlyr')
+frequency_table(df$ord2ago, 'ord2ago')
+frequency_table(df$ord3ago, 'ord3ago')
+frequency_table(df$ordhist, 'ordhist')
+
+par(mfrow = c(2, 2))
+frequency_table(df$falord, 'falord')
+frequency_table(df$sprord, 'sprord')
+frequency_table(df$years_since_purchase, 'years_since_purchase')
 ```
 
 
-
+###split into test and train + other data cleaning
 ```{r}
-install.packages('mlogit')
-library(mlogit)
-df_reshape <- mlogit.data(data = df, choice = "buy", shape = "wide")
+df_train <- df[df$train == 1, ]
+df_test <- df[df$train == 0, ]
 
-df_train <- df_reshape[df_reshape$train == 1, ]
-df_test <- df_reshape[df_reshape$train == 0, ]
+cat('\nActual targdol of test buyers', sum(df_test$targdol))
 
-df2 <- df[, c('buy', 'years_since_purchase', 'consistencycategory')]
-df3 <- mlogit.data(data = df2, choice = "buy", shape = "wide")
+# #get names
+# z <- NULL
+# for (name in names(df_test)) {
+#   z <- paste(z, name, "+")
+# }
+# z
+```
 
-#get names
-z <- NULL 
-for (name in names(df_test)) {
-  z <- paste(z, name, "+")
-}
-z
+###nominal logistic regression model?
+###fit with glm
+```{r}
+fit_glm <- glm(buy ~ datead6 + datelp6 + lpuryear + slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + falord + sprord + recentseason + years_since_purchase + consistencycategory, 
+           family = binomial(link = 'logit'), 
+           data = df_train)
+summary(fit_glm)
+```
 
-#X1 + targdol + datead6 + datelp6 + lpuryear + slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + ordhist + falord + sprord + train + recentseason + recency_year + years_since_purchase + consistencycategory + buy + chid + alt
+###compare predicted to test for first fit
+```{r}
+test_predict <- predict(fit_glm, newdata = df_test, type = 'response')
+table(df_test$buy, round(test_predict, 1), dnn = c('true', 'predicted'))
 
-fit <- mlogit(buy ~ years_since_purchase + consistencycategory, data = df3)
+test_predict[test_predict < .1] <- 0 
+test_predict[test_predict >= .1] <- 1 
 
+tab <- table(df_test$buy, test_predict, dnn = c('true', 'predicted'))
+tab
+cat('CCR:', sum(diag(tab))/sum(tab))
+cat('\nTrue targdol of predicted buyers', sum(df_test$targdol[test_predict == 1]))
+```
 
-#fit <- mlogit(buy ~  datelp6 + slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + ordhist + falord + sprord + years_since_purchase + consistencycategory, data = df_train)
-summary(fit)
+###fit with glm, fewer predictors
+```{r}
+fit2_glm <- glm(buy ~ datead6 + datelp6 + lpuryear + slshist + ordtyr + falord + sprord + recentseason + years_since_purchase + consistencycategory, 
+           family = binomial(link = 'logit'), 
+           data = df_train)
+summary(fit2_glm)
+```
+
+###compare predicted to test for second fit
+```{r}
+test_predict <- predict(fit2_glm, newdata = df_test, type = 'response')
+table(df_test$buy, round(test_predict, 1), dnn = c('true', 'predicted'))
+
+test_predict[test_predict < .1] <- 0 
+test_predict[test_predict >= .1] <- 1 
+
+tab <- table(df_test$buy, test_predict, dnn = c('true', 'predicted'))
+tab
+cat('CCR:', sum(diag(tab))/sum(tab))
+cat('\nTrue targdol of predicted buyers', sum(df_test$targdol[test_predict == 1]))
+```
+
+###mlogit giving weird singluarity issues
+```{r}
+# install.packages('mlogit')
+# library(mlogit)
+# df_reshape <- mlogit.data(data = df, choice = "buy", shape = "wide")
+# 
+# df_train <- df_reshape[df_reshape$train == 1, ]
+# df_test <- df_reshape[df_reshape$train == 0, ]
+# 
+# df2 <- df[, c('buy', 'years_since_purchase', 'consistencycategory')]
+# df3 <- mlogit.data(data = df2, choice = "buy", shape = "wide")
+# 
+# #get names
+# z <- NULL 
+# for (name in names(df_test)) {
+#   z <- paste(z, name, "+")
+# }
+# z
+# 
+# #X1 + targdol + datead6 + datelp6 + lpuryear + slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + ordhist + falord + sprord + train + recentseason + recency_year + years_since_purchase + consistencycategory + buy + chid + alt
+# 
+# fit <- mlogit(buy ~ years_since_purchase + consistencycategory, data = df3)
+# 
+# 
+# #fit <- mlogit(buy ~  datelp6 + slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + ordlyr + ord2ago + ord3ago + ordhist + falord + sprord + years_since_purchase + consistencycategory, data = df_train)
+# summary(fit)
 
 ```
 
