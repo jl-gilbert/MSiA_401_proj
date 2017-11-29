@@ -49,7 +49,13 @@ salestrain$consistencycategory <- relevel(salestrain$consistencycategory,"Ref")
 ```
 
 ```{r}
-salestrain$recentseason <- relevel(salestrain$recentseason,"Spring")
+#change season category to 1(fall) and 0(spring)
+is.factor(salestrain$recentseason)
+salestrain$recentseason<-as.character(salestrain$recentseason)
+salestrain$recentseason[salestrain$recentseason=='Spring']=0
+salestrain$recentseason[salestrain$recentseason=='Fall']=1
+salestrain$recentseason<-as.factor(salestrain$recentseason)
+contrasts(salestrain$recentseason)
 ```
 
 
@@ -86,7 +92,7 @@ avPlot(fit,"ord2ago")
 avPlot(fit,"ord3ago")
 avPlot(fit,"ordhist")
 avPlot(fit,"falord")
-avPlot(fit,"recentseasonFall")
+avPlot(fit,"recentseason1")
 avPlot(fit,"years_since_purchase")
 ```
 
@@ -130,26 +136,29 @@ relevantvars2 <- within(relevantvars2,rm("sprord"))
 ```
 
 ```{r}
-names(relevantvars2)[names(relevantvars2) == 'relevantvars21'] <- 'train_21'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars22'] <- 'train_22'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars23'] <- 'train_23'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars24'] <- 'train_24'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars25'] <- 'train_25'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars26'] <- 'train_26'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars27'] <- 'train_27'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars28'] <- 'train_28'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars29'] <- 'train_29'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars210'] <- 'train_210'
-names(relevantvars2)[names(relevantvars2) == 'relevantvars211'] <- 'train_211'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars21'] <- 'consistent1'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars22'] <- 'consistent2'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars23'] <- 'consistent3'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars24'] <- 'consistent4'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars25'] <- 'consistent5'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars26'] <- 'consistent6'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars27'] <- 'consistent7'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars28'] <- 'consistent8'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars29'] <- 'consistent9'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars210'] <- 'consistent10'
+names(relevantvars2)[names(relevantvars2) == 'relevantvars211'] <- 'consistent11'
 
 
 colnames(relevantvars2)
+```
+```{r}
+head(relevantvars2)
 ```
 
 
 
 ```{r}
-head(relevantvars2)
+#head(relevantvars2)
 fit3 = lm(log(targdol)~.,data = relevantvars2)
 summary(fit3)
 ```
@@ -176,8 +185,8 @@ step.coef <- names(coef(step.back))
 fit.step <- lm(log(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + slshist + 
     ordtyr + ordlyr + ord2ago + ord3ago + recentseason + years_since_purchase + 
     slslyr_sls2ago + slstyr_slslyr_sls2ago + slstyr_sls2ago + 
-    slstyr_slshist + slslyr_slshist + sls3ago_slshist + train_21 + 
-    train_22 + train_23 + train_25 + train_27 + train_29, data = relevantvars2)
+    slstyr_slshist + slslyr_slshist + sls3ago_slshist + consistent1 + 
+    consistent2 + consistent3 + consistent5 + consistent7 + consistent9, data = relevantvars2)
 summary(fit.step)
 ```
 
@@ -220,7 +229,7 @@ fit.step.nolog <- lm(targdol ~ slstyr + slslyr + sls2ago + sls3ago + slshist + o
     slslyr_sls2ago + sls2ago_sls3ago + slstyr_slslyr_sls2ago + 
     slstyr_sls2ago + slstyr_sls3ago + slstyr_slshist + slslyr_slshist + 
     sls2ago_slshist + slstyr_greater_slslyr + slslyr_greater_sls2ago + 
-    train_21 + train_23 + train_25 + train_29, data = relevantvars2)
+    consistent1 + consistent3 + consistent5 + consistent9, data = relevantvars2)
 summary(fit.step.nolog)
 
 plot(fit.step.nolog)
@@ -273,6 +282,9 @@ step.var["72673",]
 vif(fit.step)
 cor(step.var)
 ```
+```{r}
+head(step.var.rm)
+```
 
 # remove outliers log
 ```{r}
@@ -283,8 +295,8 @@ step.var.rm <- relevantvars2[!rownames(relevantvars2) %in% rm,]
 fit.step.rm <- lm(log(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + slshist + 
     ordtyr + ordlyr + ord2ago + ord3ago + recentseason + years_since_purchase + 
     slslyr_sls2ago + slstyr_slslyr_sls2ago + slstyr_sls2ago + 
-    slstyr_slshist + slslyr_slshist + sls3ago_slshist + train_21 + 
-    train_22 + train_23 + train_25 + train_27 + train_29, data = step.var.rm)
+    slstyr_slshist + slslyr_slshist + sls3ago_slshist + consistent1 + 
+    consistent2 + consistent3 + consistent5 + consistent7 + consistent9, data = step.var.rm)
 summary(fit.step.rm)
 
 
@@ -304,10 +316,16 @@ fit.step.sqrt.rm <- lm(sqrt(targdol) ~ slstyr + slslyr + sls2ago + sls3ago +
     slshist + ordtyr + ordlyr + ord2ago + ord3ago + recentseason + 
     years_since_purchase + slstyr_slslyr + slslyr_sls2ago + sls2ago_sls3ago + 
     slstyr_slslyr_sls2ago + slstyr_sls2ago + slstyr_slshist + 
-    slslyr_slshist + sls2ago_slshist + train_21 + train_23 + 
-    train_25 + train_29, data = step.sqrt.rm)
+    slslyr_slshist + sls2ago_slshist +  consistent1 + consistent3 + 
+   consistent5 + consistent9, data = step.sqrt.rm)
 summary(fit.step.sqrt.rm)
 summary(fit.step.sqrt)
+```
+```{r}
+head(step.nolog.rm)
+```
+```{r}
+head(step.nolog.rm)
 ```
 
 
@@ -316,13 +334,13 @@ summary(fit.step.sqrt)
 plot(fit.step.nolog, which = 4)
 
 nolog.rm <- c("48690","72035","100006")
-step.nolog.rm <- relevantvars2[!rownames(relevantvars2) %in% nolog.rm,]
+#step.nolog.rm <- relevantvars2[!rownames(relevantvars2) %in% nolog.rm,]
 fit.step.nolog.rm <- lm(targdol ~ slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + 
     ordlyr + ord2ago + ord3ago + recentseason + slstyr_slslyr + 
     slslyr_sls2ago + sls2ago_sls3ago + slstyr_slslyr_sls2ago + 
     slstyr_sls2ago + slstyr_sls3ago + slstyr_slshist + slslyr_slshist + 
     sls2ago_slshist + slstyr_greater_slslyr + slslyr_greater_sls2ago + 
-    train_21 + train_23 + train_25 + train_29, data = step.nolog.rm)
+    consistent1 + consistent3 + consistent5 + consistent9, data = step.nolog.rm)
 summary(fit.step.nolog.rm)
 summary(fit.step.nolog)
 ```
