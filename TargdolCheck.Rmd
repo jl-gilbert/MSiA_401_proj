@@ -1,0 +1,24 @@
+---
+title: "Targdol Check"
+author: "Joe Gilbert"
+date: "11/29/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+test$expP <- predict(logisticmodel,newdata=test,type="response")
+test$expTargdol <- predict(linearmodel,newdata=test)
+test$totalExp <- test$expP * test$expTargdol
+```
+
+```{r}
+top1000 <- head(sort(test$totalExp,decreasing=TRUE),n=1000)
+ourresult <- sum(top1000$targdol)
+besttop1000 <- head(sort(test$targdol,decreasing=TRUE),n=1000)
+bestresult <- sum(besttop1000$targdol)
+```
+
