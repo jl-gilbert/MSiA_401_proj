@@ -1,0 +1,84 @@
+---
+title: "Untitled"
+author: "Zili Li"
+date: "November 29, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(tidyverse)
+```
+
+###load all data from csv in working directory
+```{r}
+catalogdataclean <- read.csv("cleandata.csv")
+```
+
+###convert dates to date type
+```{r}
+catalogdataclean$datead6 <- as.Date(catalogdataclean$datead6,format = "%m/%d/%Y")
+catalogdataclean$datelp6 <- as.Date(catalogdataclean$datelp6,format = "%m/%d/%Y")
+```
+
+```{r}
+test <- catalogdataclean[catalogdataclean$train == 0,]
+```
+
+```{r}
+salestest <- test[test$targdol > 0,]
+```
+
+```{r}
+salestest$consistencycategory <- as.factor(salestest$consistencycategory)
+```
+
+```{r}
+salestest$recentseason <- as.factor(salestest$recentseason)
+```
+
+```{r}
+salestest$consistencycategory <- relevel(salestest$consistencycategory,"Ref")
+```
+
+```{r}
+salestest$recentseason <- relevel(salestest$recentseason,"Spring")
+```
+
+
+```{r}
+colnames(salestest)
+relevantvarnames <- c("targdol","slstyr","slslyr","sls2ago","sls3ago","slshist","ordtyr","ordlyr","ord2ago","ord3ago","ordhist","falord","sprord","recentseason","years_since_purchase","consistencycategory")
+test.vars <- salestest[,(names(salestest) %in% relevantvarnames)]
+```
+
+```{r}
+test.vars$slstyr_slslyr <- test.vars$slstyr*test.vars$slslyr
+test.vars$slslyr_sls2ago <- test.vars$slslyr*test.vars$sls2ago
+test.vars$sls2ago_sls3ago <- test.vars$sls2ago*test.vars$sls3ago
+test.vars$slstyr_slslyr_sls2ago <- test.vars$sls2ago*test.vars$slstyr*test.vars$slslyr
+test.vars$slstyr_slslyr_sls2ago_sls3ago <- test.vars$sls3ago*test.vars$sls2ago*test.vars$slstyr*test.vars$slslyr
+test.vars$slstyr_slslyr_sls2ago_sls3ago[is.na(test.vars$slstyr_slslyr_sls2ago_sls3ago)] <- 0
+
+test.vars$slstyr_sls2ago <- test.vars$slstyr*test.vars$sls2ago
+test.vars$slstyr_sls3ago <- test.vars$slstyr*test.vars$sls3ago
+test.vars$slslyr_sls3ago <- test.vars$slslyr*test.vars$sls3ago
+test.vars$slslyr_sls2ago_sls3ago <- test.vars$sls2ago*test.vars$sls3ago*test.vars$slslyr
+
+test.vars$slstyr_slshist <- test.vars$slstyr*test.vars$slshist
+test.vars$slslyr_slshist <- test.vars$slslyr*test.vars$slshist
+test.vars$sls2ago_slshist <- test.vars$sls2ago*test.vars$slshist
+test.vars$sls3ago_slshist <- test.vars$sls3ago*test.vars$slshist
+
+test.vars$slstyr_greater_slslyr <- (test.vars$slstyr > test.vars$slslyr)
+test.vars$slslyr_greater_sls2ago <- (test.vars$slslyr > test.vars$sls2ago)
+test.vars$sls2ago_greater_sls3ago <- (test.vars$sls2ago > test.vars$sls3ago)
+
+```
+
+
