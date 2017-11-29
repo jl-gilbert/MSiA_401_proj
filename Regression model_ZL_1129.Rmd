@@ -167,6 +167,26 @@ fit3.sqrt = lm(sqrt(targdol)~.,data = relevantvars2)
 summary(fit3.sqrt)
 ```
 
+# no interaction
+```{r}
+seq(15,30)
+var.nointeraction <- relevantvars2[,-c(seq(15,30))]
+colnames(var.nointeraction)
+fit.nointeraction <- lm(targdol~., data=var.nointeraction)
+step.nointeraction <- step(fit.nointeraction, direction = "backward")
+
+fit.step.nointeraction <- lm(targdol ~ slstyr + slslyr + sls2ago + slshist + ordlyr + ord3ago + 
+    recentseason + years_since_purchase + consistent1 + consistent2 + 
+    consistent3 + consistent5 + consistent7 + consistent9, data = var.nointeraction)
+summary(fit.step.nointeraction)
+
+vif(fit.step.nointeraction)
+
+anova(fit.step.nointeraction,fit.step.nolog)
+```
+
+
+
 # log stepwise
 ```{r}
 step.forward <- step(fit3, direction = "forward")
@@ -322,20 +342,8 @@ fit.step.nolog.rm <- lm(targdol ~ slstyr + slslyr + sls2ago + sls3ago + slshist 
     consistent1 + consistent3 + consistent5 + consistent9, data = step.nolog.rm)
 summary(fit.step.nolog.rm)
 summary(fit.step.nolog)
-```
 
-
-
-# Remove all outliers
-```{r}
-names(outlier)
-step.var.rm.all <- step.var[!rownames(step.var) %in% names(outlier),]
-fit.step.rm.all <- lm(log(targdol)~., data = step.var.rm.all)
-summary(fit.step.rm.all)
-
-plot(fit.step.rm.all, which = 2)
-plot(fit.step.rm.all, which = 1)
-plot(fit.step.rm.all, which = 4)
+vif(fit.step.nolog)
 
 ```
 
