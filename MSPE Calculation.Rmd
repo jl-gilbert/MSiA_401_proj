@@ -39,16 +39,16 @@ salestest$consistencycategory <- as.factor(salestest$consistencycategory)
 ```
 
 ```{r}
-salestest$recentseason <- as.factor(salestest$recentseason)
+salestrain$consistencycategory <- as.character(salestrain$consistencycategory)
+salestrain$consistencycategory[salestrain$consistencycategory=="Spring"] <- 0
+salestrain$consistencycategory[salestrain$consistencycategory=="Fall"] <- 1
+salestrain$consistencycategory <- as.factor(salestrain$consistencycategory)
 ```
 
 ```{r}
 salestest$consistencycategory <- relevel(salestest$consistencycategory,"Ref")
 ```
 
-```{r}
-salestest$recentseason <- relevel(salestest$recentseason,"Spring")
-```
 
 
 ```{r}
@@ -91,17 +91,17 @@ test.vars <- within(test.vars,rm("test.varsRef"))
 
 test.vars <- within(test.vars,rm("sprord"))
 
-names(test.vars)[names(test.vars) == 'test.vars1'] <- 'train_21'
-names(test.vars)[names(test.vars) == 'test.vars2'] <- 'train_22'
-names(test.vars)[names(test.vars) == 'test.vars3'] <- 'train_23'
-names(test.vars)[names(test.vars) == 'test.vars4'] <- 'train_24'
-names(test.vars)[names(test.vars) == 'test.vars5'] <- 'train_25'
-names(test.vars)[names(test.vars) == 'test.vars6'] <- 'train_26'
-names(test.vars)[names(test.vars) == 'test.vars7'] <- 'train_27'
-names(test.vars)[names(test.vars) == 'test.vars8'] <- 'train_28'
-names(test.vars)[names(test.vars) == 'test.vars9'] <- 'train_29'
-names(test.vars)[names(test.vars) == 'test.vars10'] <- 'train_210'
-names(test.vars)[names(test.vars) == 'test.vars11'] <- 'train_211'
+names(test.vars)[names(test.vars) == 'test.vars1'] <- 'consistent1'
+names(test.vars)[names(test.vars) == 'test.vars2'] <- 'consistent2'
+names(test.vars)[names(test.vars) == 'test.vars3'] <- 'consistent3'
+names(test.vars)[names(test.vars) == 'test.vars4'] <- 'consistent4'
+names(test.vars)[names(test.vars) == 'test.vars5'] <- 'consistent5'
+names(test.vars)[names(test.vars) == 'test.vars6'] <- 'consistent6'
+names(test.vars)[names(test.vars) == 'test.vars7'] <- 'consistent7'
+names(test.vars)[names(test.vars) == 'test.vars8'] <- 'consistent8'
+names(test.vars)[names(test.vars) == 'test.vars9'] <- 'consistent9'
+names(test.vars)[names(test.vars) == 'test.vars10'] <- 'consistent10'
+names(test.vars)[names(test.vars) == 'test.vars11'] <- 'consistent11'
 
 colnames(test.vars)
 colnames(relevantvars2)
@@ -115,12 +115,12 @@ colnames(relevantvars2)
 var.log <- c('slstyr', "slslyr", "sls2ago", "sls3ago", "slshist",
     "ordtyr", "ordlyr", "ord2ago", "ord3ago","recentseason", "years_since_purchase",
     "slslyr_sls2ago", "slstyr_slslyr_sls2ago","slstyr_sls2ago",
-    "slstyr_slshist","slslyr_slshist", "sls3ago_slshist","train_21",
-    "train_22", "train_23", "train_25", "train_27","train_29")
+    "slstyr_slshist","slslyr_slshist", "sls3ago_slshist","consistent1",
+    "consistent2", "consistent3", "consistent5", "consistent7","consistent9")
 test.log <- test.vars[,(names(test.vars) %in% var.log)]
 
 colnames(test.log)
-dol.predict <- predict(fit.step.rm, newdata = test.nolog)
+dol.predict <- predict(fit.step.rm, newdata = test.log)
 ```
 
 
@@ -133,7 +133,7 @@ sum((test.vars$targdol-exp(dol.predict))^2)/(4726-26)
 
 # sqrt transformation
 ```{r}
-var.sqrt <- c("slstyr","slslyr","sls2ago","sls3ago","slshist","ordtyr","ordlyr","ord2ago","ord3ago","recentseason","years_since_purchase","slstyr_slslyr","slslyr_sls2ago", "sls2ago_sls3ago", "slstyr_slslyr_sls2ago", "slstyr_sls2ago","slstyr_slshist", "slslyr_slshist","sls2ago_slshist","train_21","train_23","train_25","train_29")
+var.sqrt <- c("slstyr","slslyr","sls2ago","sls3ago","slshist","ordtyr","ordlyr","ord2ago","ord3ago","recentseason","years_since_purchase","slstyr_slslyr","slslyr_sls2ago", "sls2ago_sls3ago", "slstyr_slslyr_sls2ago", "slstyr_sls2ago","slstyr_slshist", "slslyr_slshist","sls2ago_slshist","consistent1","consistent3","consistent5","consistent9")
 
 
 test.sqrt <- test.vars[,(names(test.vars) %in% var.sqrt)]
@@ -150,7 +150,7 @@ sum((test.vars$targdol-(dol.predict.sqrt)^2)^2)/(4726-24)
 # no transformation
 ```{r}
 names(coef(fit.step.nolog))
-var.nolog<- c("slstyr", "slslyr","sls2ago","sls3ago","slshist","ordtyr", "ordlyr","ord2ago","ord3ago","recentseason","slstyr_slslyr","slslyr_sls2ago","sls2ago_sls3ago","slstyr_slslyr_sls2ago","slstyr_sls2ago","slstyr_sls3ago","slstyr_slshist","slslyr_slshist","sls2ago_slshist", "slstyr_greater_slslyr",  "slslyr_greater_sls2ago", "train_21","train_23", "train_25","train_29")
+var.nolog<- c("slstyr", "slslyr","sls2ago","sls3ago","slshist","ordtyr", "ordlyr","ord2ago","ord3ago","recentseason","slstyr_slslyr","slslyr_sls2ago","sls2ago_sls3ago","slstyr_slslyr_sls2ago","slstyr_sls2ago","slstyr_sls3ago","slstyr_slshist","slslyr_slshist","sls2ago_slshist", "slstyr_greater_slslyr",  "slslyr_greater_sls2ago", "consistent1","consistent3", "consistent5","consistent9")
 
 test.nolog <- test.vars[,(names(test.vars) %in% var.nolog)]
 colnames(test.nolog)
@@ -164,5 +164,21 @@ sum((test.vars$targdol-dol.predict.nolog)^2)/(4726-26)
 
 dol.predict.nolog.rm <- predict(fit.step.nolog.rm, newdata = test.nolog)
 sum((test.vars$targdol-dol.predict.nolog.rm)^2)/(4726-26)
+```
+
+
+# no interaction
+```{r}
+var.nointer <- c("slstyr","slslyr","sls2ago", "slshist", "ordlyr", "ord3ago", 
+    "recentseason", "years_since_purchase","consistent1","consistent2",
+    "consistent3","consistent5","consistent7","consistent9")
+test.nointer <- test.vars[,(names(test.vars) %in% var.nointer)]
+colnames(test.nointer)
+
+dol.predict.nointer <- predict(fit.step.nointeraction, newdata = test.nointer)
+
+sum((test.vars$targdol-dol.predict.nointer)^2)/(4726-15)
+
+
 ```
 
