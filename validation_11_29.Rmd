@@ -1,0 +1,200 @@
+---
+title: "Validation"
+author: "Ziwen Wang"
+date: "11/29/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+df<-read.csv("cleandata.csv", header = T)
+#View(df)
+head(df)
+test<-df[df$train==0,]
+head(test)
+```
+
+```{r}
+#change the targdol to 0:1
+#test$targdol[test$targdol!=0]=1
+test <- subset(test, select = -c(X) )
+head(test)
+```
+
+```{r}
+#relevel
+#factor
+test$consistencycategory <- relevel(test$consistencycategory, ref = "Ref")
+is.factor(test$consistencycategory)
+contrasts(test$consistencycategory)
+```
+```{r}
+#change season category to 1(fall) and 0(spring)
+is.factor(test$recentseason)
+test$recentseason<-as.character(test$recentseason)
+test$recentseason[test$recentseason=='Spring']=0
+test$recentseason[test$recentseason=='Fall']=1
+test$recentseason<-as.factor(test$recentseason)
+contrasts(test$recentseason)
+```
+
+```{r}
+#createc the new predictor named the month of last purchase
+#check the type of date and year
+library(lubridate)
+class(test$datelp6)
+#test$datelp6<-as.Date(test$datelp6)
+test$lpmonth<-month(test$datelp6)
+test$lpmonth<-as.integer(test$lpmonth)
+```
+
+```{r}
+#trans_logistic_regression
+test$slshist_0.5<-(test$slshist)^0.5
+test$ordtyr_2<-(test$ordtyr)^2
+test$ord2ago_0.5<-(test$ord2ago)^0.5
+test$sprord_0.5<-(test$sprord)^0.5
+test$years_since_purchase_0.5<-(test$years_since_purchase)^0.5
+```
+
+
+
+
+```{r}
+test$slstyr_slslyr <- test$slstyr*test$slslyr
+test$slslyr_sls2ago <- test$slslyr*test$sls2ago
+test$sls2ago_sls3ago <- test$sls2ago*test$sls3ago
+test$slstyr_slslyr_sls2ago <- test$sls2ago*test$slstyr*test$slslyr
+test$slstyr_slslyr_sls2ago_sls3ago <- test$sls3ago*test$sls2ago*test$slstyr*test$slslyr
+test$slstyr_slslyr_sls2ago_sls3ago[is.na(test$slstyr_slslyr_sls2ago_sls3ago)] <- 0
+
+test$slstyr_sls2ago <- test$slstyr*test$sls2ago
+test$slstyr_sls3ago <- test$slstyr*test$sls3ago
+test$slslyr_sls3ago <- test$slslyr*test$sls3ago
+test$slslyr_sls2ago_sls3ago <- test$sls2ago*test$sls3ago*test$slslyr
+
+test$slstyr_slshist <- test$slstyr*test$slshist
+test$slslyr_slshist <- test$slslyr*test$slshist
+test$sls2ago_slshist <- test$sls2ago*test$slshist
+test$sls3ago_slshist <- test$sls3ago*test$slshist
+
+test$slstyr_greater_slslyr <- (test$slstyr > test$slslyr)
+test$slslyr_greater_sls2ago <- (test$slslyr > test$sls2ago)
+test$sls2ago_greater_sls3ago <- (test$sls2ago > test$sls3ago)
+
+```
+
+```{r}
+test$consistent1 <- as.numeric(test$ordtyr > 0 
+                                      & test$ordlyr > 0
+                                      & test$ord2ago > 0
+                                      & test$ord3ago > 0)
+test$consistent2 <- as.numeric(test$ordtyr == 0 
+                                      & test$ordlyr > 0
+                                      & test$ord2ago > 0
+                                      & test$ord3ago > 0)
+test$consistent3 <- as.numeric(test$ordtyr > 0 
+                                      & test$ordlyr > 0
+                                      & test$ord2ago > 0
+                                      & test$ord3ago == 0)
+test$consistent4 <- as.numeric(test$ordtyr > 0 
+                                      & test$ordlyr > 0
+                                      & test$ord2ago == 0
+                                      & test$ord3ago > 0)
+test$consistent5 <- as.numeric(test$ordtyr > 0 
+                                      & test$ordlyr == 0
+                                      & test$ord2ago > 0
+                                      & test$ord3ago > 0)
+test$consistent6 <- as.numeric(test$ordtyr > 0 
+                                      & test$ordlyr > 0
+                                      & test$ord2ago == 0
+                                      & test$ord3ago == 0)
+test$consistent7 <- as.numeric(test$ordtyr == 0 
+                                      & test$ordlyr > 0
+                                      & test$ord2ago > 0
+                                      & test$ord3ago == 0)
+test$consistent8 <- as.numeric(test$ordtyr == 0 
+                                      & test$ordlyr == 0
+                                      & test$ord2ago > 0
+                                      & test$ord3ago > 0)
+test$consistent9 <- as.numeric(test$ordtyr > 0 
+                                      & test$ordlyr == 0
+                                      & test$ord2ago > 0
+                                      & test$ord3ago == 0)
+test$consistent10 <- as.numeric(test$ordtyr == 0 
+                                      & test$ordlyr > 0
+                                      & test$ord2ago == 0
+                                      & test$ord3ago > 0)
+test$consistent11 <- as.numeric(test$ordtyr > 0 
+                                      & test$ordlyr == 0
+                                      & test$ord2ago == 0
+                                      & test$ord3ago > 0)
+
+```
+
+
+```{r}
+#test_predict2 <- predict(model.final, newdata = test, type = 'response') 
+test$expP <- predict.glm(model.final,newdata=test,type="response")
+test$expTargdol <- predict(fit.step.nolog,newdata=test)
+test$totalExp <- test$expP * test$expTargdol
+```
+
+```{r}
+#test_predict2 <- predict(model.final, newdata = test, type = 'response') 
+test$expP_log <- predict.glm(model.final,newdata=test,type="response")
+test$expTargdol_log <- predict(fit.step.rm,newdata=test)
+test$totalExp_log <- test$expP_log * exp(test$expTargdol_log)
+```
+
+```{r}
+#test_predict3 <- predict(model.final, newdata = test, type = 'response') 
+test$expP_sqrt <- predict.glm(model.final,newdata=test,type="response")
+#test$expTargdol_sqrt <- predict(fit.step.sqrt,newdata=test)
+#test$totalExp_sqrt <- test$expP_sqrt * exp(test$expTargdol_sqrt)
+```
+
+```{r}
+plot(test$expP)
+plot(test$expP_log)
+```
+
+```{r}
+test_predict2
+```
+
+```{r}
+library(plyr)
+
+top1000<-head(arrange(test,desc(totalExp)), n = 1000)
+ourresult <- sum(top1000$targdol)
+ourresult
+
+besttop1000 <- head(arrange(test,desc(targdol)), n = 1000)
+bestresult <- sum(besttop1000$targdol)
+bestresult
+```
+
+
+
+
+
+```{r}
+plot(test$totalExp)
+plot(test$totalExp_log)
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
