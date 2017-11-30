@@ -39,14 +39,14 @@ salestest$consistencycategory <- as.factor(salestest$consistencycategory)
 ```
 
 ```{r}
-salestrain$recentseason<-as.character(salestrain$recentseason)
-salestrain$recentseason[salestrain$recentseason=='Spring']=0
-salestrain$recentseason[salestrain$recentseason=='Fall']=1
-salestrain$recentseason<-as.factor(salestrain$recentseason)
+salestest$recentseason<-as.character(salestest$recentseason)
+salestest$recentseason[salestest$recentseason=='Spring']=0
+salestest$recentseason[salestest$recentseason=='Fall']=1
+salestest$recentseason<-as.factor(salestest$recentseason)
 ```
 
 ```{r}
-salestrain$consistencycategory <- as.factor(salestrain$consistencycategory)
+salestest$consistencycategory <- as.factor(salestest$consistencycategory)
 salestest$consistencycategory <- relevel(salestest$consistencycategory,"Ref")
 ```
 
@@ -121,6 +121,8 @@ var.log <- c('slstyr', "slslyr", "sls2ago", "sls3ago", "slshist",
 test.log <- test.vars[,(names(test.vars) %in% var.log)]
 
 colnames(test.log)
+View(test.log)
+
 dol.predict <- predict(fit.step.rm, newdata = test.log)
 ```
 
