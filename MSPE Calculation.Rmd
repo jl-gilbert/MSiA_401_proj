@@ -122,15 +122,14 @@ test.log <- test.vars[,(names(test.vars) %in% var.log)]
 
 colnames(test.log)
 View(test.log)
+fit.step.rm.both
 
 dol.predict <- predict(fit.step.rm, newdata = test.log)
-```
-
-
-```{r}
-View(test.vars)
-
 sum((test.vars$targdol-exp(dol.predict))^2)/(4726-26)
+
+# remove outliers
+dol.predict.both <- predict(fit.step.rm.both, newdata = test.log)
+sum((test.vars$targdol-exp(dol.predict.both))^2)/(4726-26)
 ```
 
 
@@ -144,9 +143,12 @@ test.sqrt <- test.vars[,(names(test.vars) %in% var.sqrt)]
 names(coef(fit.step.sqrt.rm))
 colnames(test.sqrt)
 dol.predict.sqrt <- predict(fit.step.sqrt.rm, newdata = test.sqrt)
-
-
 sum((test.vars$targdol-(dol.predict.sqrt)^2)^2)/(4726-24)
+
+# remove outliers
+dol.predict.sqrt.both <- predict(fit.step.sqrt.rm.both, newdata = test.sqrt)
+sum((test.vars$targdol-(dol.predict.sqrt.both)^2)^2)/(4726-24)
+
 ```
 
 
@@ -163,6 +165,11 @@ dol.predict.nolog <- predict(fit.step.nolog, newdata = test.nolog)
 sum((test.vars$targdol-dol.predict.nolog)^2)/(4726-26)
 
 
+# without outliers using std residuals
+dol.predict.nolog.rm.std <- predict(fit.step.nolog.rm.std, newdata = test.nolog)
+sum((test.vars$targdol-dol.predict.nolog.rm.std)^2)/(4726-26)
+
+
 # without outliers
 dol.predict.nolog.rm <- predict(fit.step.nolog.rm, newdata = test.nolog)
 sum((test.vars$targdol-dol.predict.nolog.rm)^2)/(4726-26)
@@ -170,6 +177,8 @@ sum((test.vars$targdol-dol.predict.nolog.rm)^2)/(4726-26)
 # remove 1 outlier
 dol.predict.nolog.rm1 <- predict(fit.step.nolog.rm1, newdata = test.nolog)
 sum((test.vars$targdol-dol.predict.nolog.rm1)^2)/(4726-26)
+
+
 
 ```
 
