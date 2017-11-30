@@ -68,6 +68,12 @@ df$year_lp6yr[df$recentseason == "Fall"] <- year(df$datelp6[df$recentseason == "
 df$year_lp6yr[df$year_lp6yr == 2013] <- df$year_lp6yr[df$year_lp6yr == 2013] - 1
 ```
 
+###COUNT # ROWS WE CHANGED
+```{r}
+nrow(df[df$recentseason == "Fall",] )
+table(df$year_lp6yr == year(df$datelp6), useNA = "ifany")
+```
+
 ###Create max year - for 2009+ data
 ```{r}
 df$max_year <- pmax(df$year_lp6yr, df$year_ordyr)
@@ -86,6 +92,12 @@ df$lpuryear[df$lpuryear == 0] = 2010
 df$lpuryear[df$lpuryear == 1] = 2011
 df$lpuryear[df$lpuryear == 2] = 2012
 ```
+
+###COUNT DISCREPANCY
+```{r}
+table(df$lpuryear == year(df$datelp6), useNA = "ifany")
+```
+
 
 ###Create year - for 2009- data
 ```{r}
@@ -135,6 +147,11 @@ ord_adjust <- function(df) {
 }
 
 df<-ord_adjust(df)
+```
+
+###COUNT DISCREPANCY
+```{r}
+table(df$ordhist == df$falord + df$sprord, useNA = "ifany")
 ```
 
 ###Impute ordyr counts for consistency
