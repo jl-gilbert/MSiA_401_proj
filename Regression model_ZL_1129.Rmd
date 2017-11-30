@@ -76,6 +76,8 @@ plot(fit, which = 2)
 ```
 
 ```{r}
+par(mfrow = c(4, 4))
+
 avPlot(fit,"slstyr")
 avPlot(fit,"slslyr")
 avPlot(fit,"sls2ago")
@@ -308,6 +310,31 @@ fit.step.rm <- lm(log(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + slshist +
 summary(fit.step.rm)
 
 
+# std residual
+log.std <- rstandard(fit.step)
+sort(log.std, decreasing = T)[1:3]
+log.rm.std <- c("41618","12517","37929")
+step.log.rm.std <- relevantvars2[!rownames(relevantvars2) %in% log.rm.std,]
+
+fit.step.rm.std <- lm(log(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + slshist + 
+    ordtyr + ordlyr + ord2ago + ord3ago + recentseason + years_since_purchase + 
+    slslyr_sls2ago + slstyr_slslyr_sls2ago + slstyr_sls2ago + 
+    slstyr_slshist + slslyr_slshist + sls3ago_slshist + consistent1 + 
+    consistent2 + consistent3 + consistent5 + consistent7 + consistent9, data = step.log.rm.std)
+summary(fit.step.rm.std)
+
+
+# remove both
+step.log.rm.both <- step.var.rm[!rownames(step.var.rm) %in% log.rm.std,]
+fit.step.rm.both <- lm(log(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + slshist + 
+    ordtyr + ordlyr + ord2ago + ord3ago + recentseason + years_since_purchase + 
+    slslyr_sls2ago + slstyr_slslyr_sls2ago + slstyr_sls2ago + 
+    slstyr_slshist + slslyr_slshist + sls3ago_slshist + consistent1 + 
+    consistent2 + consistent3 + consistent5 + consistent7 + consistent9, data = step.log.rm.both)
+summary(fit.step.rm.both)
+
+
+
 plot(fit.step.rm, which = 2)
 plot(fit.step.rm, which = 1)
 plot(fit.step.rm, which = 4)
@@ -317,6 +344,10 @@ plot(fit.step.rm, which = 4)
 
 # sqrt outliers
 ```{r}
+plot(fit.step.sqrt, which = 2)
+plot(fit.step.sqrt, which = 1)
+plot(fit.step.sqrt, which = 4)
+
 fit.step.sqrt
 sqrt.rm <- c("48690","72035","38551")
 step.sqrt.rm <- relevantvars2[!rownames(relevantvars2) %in% sqrt.rm,]
@@ -325,7 +356,33 @@ fit.step.sqrt.rm <- lm(sqrt(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + sls
     slstyr_slslyr + slslyr_sls2ago + sls2ago_sls3ago + slstyr_slslyr_sls2ago + 
     slstyr_sls2ago + slstyr_slshist + slslyr_slshist + sls2ago_slshist + 
     consistent1 + consistent3 + consistent5 + consistent9, data = step.sqrt.rm)
+summary(fit.step.sqrt.rm)
 
+# std residual
+sqrt.std <- rstandard(fit.step.sqrt)
+sort(sqrt.std, decreasing = T)[1:3]
+sqrt.rm.std <- c("41618","12517","37929")
+step.sqrt.rm.std <- relevantvars2[!rownames(relevantvars2) %in% sqrt.rm.std,]
+
+fit.step.sqrt.rm.std <- lm(sqrt(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + slshist + 
+    ordtyr + ordlyr + ord2ago + ord3ago + recentseason + years_since_purchase + 
+    slstyr_slslyr + slslyr_sls2ago + sls2ago_sls3ago + slstyr_slslyr_sls2ago + 
+    slstyr_sls2ago + slstyr_slshist + slslyr_slshist + sls2ago_slshist + 
+    consistent1 + consistent3 + consistent5 + consistent9, data = step.sqrt.rm.std)
+
+summary(fit.step.sqrt.rm.std)
+
+
+# remove both
+step.sqrt.rm.both <- step.sqrt.rm.std[!rownames(step.sqrt.rm.std) %in% sqrt.rm,]
+fit.step.sqrt.rm.both <- lm(sqrt(targdol) ~ slstyr + slslyr + sls2ago + sls3ago + slshist + 
+    ordtyr + ordlyr + ord2ago + ord3ago + recentseason + years_since_purchase + 
+    slstyr_slslyr + slslyr_sls2ago + sls2ago_sls3ago + slstyr_slslyr_sls2ago + 
+    slstyr_sls2ago + slstyr_slshist + slslyr_slshist + sls2ago_slshist + 
+    consistent1 + consistent3 + consistent5 + consistent9, data = step.sqrt.rm.both)
+
+summary(fit.step.sqrt.rm.both)
+summary(fit.step.sqrt.rm.std)
 summary(fit.step.sqrt.rm)
 summary(fit.step.sqrt)
 ```
@@ -333,6 +390,8 @@ summary(fit.step.sqrt)
 
 # no transformation outliers
 ```{r}
+plot(fit.step.nolog, which = 2)
+plot(fit.step.nolog, which = 1)
 plot(fit.step.nolog, which = 4)
 
 nolog.rm <- c("48690","72035","100006")
@@ -356,10 +415,40 @@ fit.step.nolog.rm1 <- lm(targdol ~ slstyr + slslyr + sls2ago + sls3ago + slshist
     consistent1 + consistent3 + consistent5 + consistent9, data = step.nolog.rm1)
 summary(fit.step.nolog.rm1)
 
+# Standardlized residual
+nolog.stres<- rstandard(fit.step.nolog)
+sort(nolog.stres, decreasing = T)[1:3]
 
+nolog.rm.std <- c("41618","12517","11788")
+step.nolog.rm.std <- relevantvars2[!rownames(relevantvars2) %in% nolog.rm.std,]
+fit.step.nolog.rm.std <- lm(targdol ~ slstyr + slslyr + sls2ago + sls3ago + slshist + ordtyr + 
+    ordlyr + ord2ago + ord3ago + recentseason + slstyr_slslyr + 
+    slslyr_sls2ago + sls2ago_sls3ago + slstyr_slslyr_sls2ago + 
+    slstyr_sls2ago + slstyr_sls3ago + slstyr_slshist + slslyr_slshist + 
+    sls2ago_slshist + slstyr_greater_slslyr + slslyr_greater_sls2ago + 
+    consistent1 + consistent3 + consistent5 + consistent9, data = step.nolog.rm.std)
+summary(fit.step.nolog.rm.std)
 
 
 vif(fit.step.nolog)
+
+```
+
+
+
+## Final Models
+```{r}
+# log-transformed
+fit.step.rm.both
+
+# sqrt-transformed
+fit.step.sqrt.rm.both
+
+# no transformation
+fit.step.nolog
+
+# no transformation and remove 3 outliers
+fit.step.nolog.rm.std
 
 ```
 
