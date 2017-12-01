@@ -104,8 +104,7 @@ names(test.vars)[names(test.vars) == 'test.vars9'] <- 'consistent9'
 names(test.vars)[names(test.vars) == 'test.vars10'] <- 'consistent10'
 names(test.vars)[names(test.vars) == 'test.vars11'] <- 'consistent11'
 
-colnames(test.vars)
-colnames(relevantvars2)
+
 ```
 
 
@@ -120,16 +119,14 @@ var.log <- c('slstyr', "slslyr", "sls2ago", "sls3ago", "slshist",
     "consistent2", "consistent3", "consistent5", "consistent7","consistent9")
 test.log <- test.vars[,(names(test.vars) %in% var.log)]
 
-colnames(test.log)
-View(test.log)
-fit.step.rm.both
-
 dol.predict <- predict(fit.step.rm, newdata = test.log)
-sum((test.vars$targdol-exp(dol.predict))^2)/(4726-26)
+sum((test.vars$targdol-exp(dol.predict))^2)/(4726-24)
 
 # remove outliers
 dol.predict.both <- predict(fit.step.rm.both, newdata = test.log)
-sum((test.vars$targdol-exp(dol.predict.both))^2)/(4726-26)
+sum((test.vars$targdol-exp(dol.predict.both))^2)/(4726-24)
+#sum((test.vars$targdol-exp(predict(fit.step.rm.both, newdata = test.vars)))^2/(nrow(test.vars)-length(coef(fit.step.rm.both))))
+
 ```
 
 
@@ -140,39 +137,40 @@ var.sqrt <- c("slstyr","slslyr","sls2ago","sls3ago","slshist","ordtyr","ordlyr",
 
 test.sqrt <- test.vars[,(names(test.vars) %in% var.sqrt)]
 
-names(coef(fit.step.sqrt.rm))
-colnames(test.sqrt)
 dol.predict.sqrt <- predict(fit.step.sqrt.rm, newdata = test.sqrt)
 sum((test.vars$targdol-(dol.predict.sqrt)^2)^2)/(4726-24)
 
 # remove outliers
 dol.predict.sqrt.both <- predict(fit.step.sqrt.rm.both, newdata = test.sqrt)
 sum((test.vars$targdol-(dol.predict.sqrt.both)^2)^2)/(4726-24)
+sum((test.vars$targdol-predict(fit.step.sqrt.rm.both, newdata = test.vars)^2)^2/(nrow(test.vars)-length(coef(fit.step.sqrt.rm.both))))
 
 ```
 
 
 # no transformation
 ```{r}
-names(coef(fit.step.nolog))
+
 var.nolog<- c("slstyr", "slslyr","sls2ago","sls3ago","slshist","ordtyr", "ordlyr","ord2ago","ord3ago","recentseason","slstyr_slslyr","slslyr_sls2ago","sls2ago_sls3ago","slstyr_slslyr_sls2ago","slstyr_sls2ago","slstyr_sls3ago","slstyr_slshist","slslyr_slshist","sls2ago_slshist", "slstyr_greater_slslyr",  "slslyr_greater_sls2ago", "consistent1","consistent3", "consistent5","consistent9")
 
 test.nolog <- test.vars[,(names(test.vars) %in% var.nolog)]
-colnames(test.nolog)
 
 dol.predict.nolog <- predict(fit.step.nolog, newdata = test.nolog)
-
 sum((test.vars$targdol-dol.predict.nolog)^2)/(4726-26)
+#sum((test.vars$targdol-predict(fit.step.nolog, newdata = test.vars))^2/(nrow(test.vars)-length(coef(fit.step.nolog))))
+
 
 
 # without outliers using std residuals
 dol.predict.nolog.rm.std <- predict(fit.step.nolog.rm.std, newdata = test.nolog)
 sum((test.vars$targdol-dol.predict.nolog.rm.std)^2)/(4726-26)
+#sum((test.vars$targdol-predict(fit.step.nolog.rm.std, newdata = test.vars))^2/(nrow(test.vars)-length(coef(fit.step.nolog.rm.std))))
 
 
 # without outliers
 dol.predict.nolog.rm <- predict(fit.step.nolog.rm, newdata = test.nolog)
 sum((test.vars$targdol-dol.predict.nolog.rm)^2)/(4726-26)
+#sum((test.vars$targdol-predict(fit.step.nolog.rm, newdata = test.vars))^2/(nrow(test.vars)-length(coef(fit.step.nolog.rm))))
 
 # remove 1 outlier
 dol.predict.nolog.rm1 <- predict(fit.step.nolog.rm1, newdata = test.nolog)
